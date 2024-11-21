@@ -13,7 +13,7 @@ class GameOverMenu:
 			#If enter is pressed switch to the main menu
 			if event.key == pygame.K_RETURN:
 				self.game.screen.fill((0,0,0))
-				self.game.switchToMainMenu()
+				self.game.switchToMenu("MAIN_MENU")
 
 
 	def draw(self):
