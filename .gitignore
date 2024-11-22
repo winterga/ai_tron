@@ -1,2 +1,2 @@
 ./font_samples/*
-_pycache__/
+__pycache__/
