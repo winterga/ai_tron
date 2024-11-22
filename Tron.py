@@ -3,7 +3,7 @@ from GameBoard import GameBoard
 from MainMenu import MainMenu
 from GameOverMenu import GameOverMenu
 from Match import Match
-
+from Players import Player, Human, Computer
 
 
 
@@ -86,7 +86,26 @@ class Tron:
         else:
             self.gameOverMenu.draw()
         
+    def startMatch(self, matchType):
+        self.board = GameBoard(self, self.xTiles, self.yTiles, self.tileSize)
+        self.players = {}
+		#Create players/Computers per match type.
+		#PVP - 2 humans
+        if matchType == 0:
+            self.players[1] = Human(self, (220, 0, 30), 1, 3, 3, Player.RIGHT, (pygame.K_w, pygame.K_d, pygame.K_s, pygame.K_a))
+            self.players[2] = Human(self, (30, 220, 0), 2, self.board.xTiles-4, self.board.yTiles-4, Player.LEFT, (pygame.K_UP, pygame.K_RIGHT, pygame.K_DOWN, pygame.K_LEFT))
+		#PVE - 1 human and 1 bot
+        elif matchType == 1:
+            self.players[1] = Human(self, (220, 0, 30), 1, 3, 3, Player.RIGHT, (pygame.K_UP, pygame.K_RIGHT, pygame.K_DOWN, pygame.K_LEFT))
+            self.players[2] = Computer(self, (30, 220, 0), 2, self.board.xTiles-4, self.board.yTiles-4, Player.LEFT)
+		#EVE - 2 bots
+        elif matchType == 2:
+            self.players[1] = Computer(self, (220, 0, 30), 1, 3, 3, Player.RIGHT)
+            self.players[2] = Computer(self, (90, 220, 50), 2, self.board.xTiles-4, self.board.yTiles-4, Player.LEFT)
 
+		#Build match and set program state
+        self.match = Match(self, matchType)
+        self.state = 'PLAYING'
         
     
 if __name__ == '__main__':
