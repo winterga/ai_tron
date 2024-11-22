@@ -92,16 +92,16 @@ class Tron:
 		#Create players/Computers per match type.
 		#PVP - 2 humans
         if matchType == 0:
-            self.players[1] = Human(self, (220, 0, 30), 1, 3, 3, Player.DIRECT_RIGHT, (pygame.K_w, pygame.K_d, pygame.K_s, pygame.K_a))
-            self.players[2] = Human(self, (30, 220, 0), 2, self.board.xTiles-4, self.board.yTiles-4, Player.DIRECT_LEFT, (pygame.K_UP, pygame.K_RIGHT, pygame.K_DOWN, pygame.K_LEFT))
+            self.players[1] = Human(self, (220, 0, 30), 1, 3, 3, Player.RIGHT, (pygame.K_w, pygame.K_d, pygame.K_s, pygame.K_a))
+            self.players[2] = Human(self, (30, 220, 0), 2, self.board.xTiles-4, self.board.yTiles-4, Player.LEFT, (pygame.K_UP, pygame.K_RIGHT, pygame.K_DOWN, pygame.K_LEFT))
 		#PVE - 1 human and 1 bot
         elif matchType == 1:
-            self.players[1] = Human(self, (220, 0, 30), 1, 3, 3, Player.DIRECT_RIGHT, (pygame.K_UP, pygame.K_RIGHT, pygame.K_DOWN, pygame.K_LEFT))
-            self.players[2] = Computer(self, (30, 220, 0), 2, self.board.xTiles-4, self.board.yTiles-4, Player.DIRECT_LEFT)
+            self.players[1] = Human(self, (220, 0, 30), 1, 3, 3, Player.RIGHT, (pygame.K_UP, pygame.K_RIGHT, pygame.K_DOWN, pygame.K_LEFT))
+            self.players[2] = Computer(self, (30, 220, 0), 2, self.board.xTiles-4, self.board.yTiles-4, Player.LEFT)
 		#EVE - 2 bots
         elif matchType == 2:
-            self.players[1] = Computer(self, (220, 0, 30), 1, 3, 3, Player.DIRECT_RIGHT)
-            self.players[2] = Computer(self, (90, 220, 50), 2, self.board.xTiles-4, self.board.yTiles-4, Player.DIRECT_LEFT)
+            self.players[1] = Computer(self, (220, 0, 30), 1, 3, 3, Player.RIGHT)
+            self.players[2] = Computer(self, (90, 220, 50), 2, self.board.xTiles-4, self.board.yTiles-4, Player.LEFT)
 
 		#Build match and set program state
         self.match = Match(self, matchType)

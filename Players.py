@@ -24,23 +24,23 @@ class Player:
 		gameObj.board.grid[y][x] = playerid
 	
 	#direction definitions
-	DIRECT_UP = 0
-	DIRECT_RIGHT = 1
-	DIRECT_DOWN = 2
-	DIRECT_LEFT = 3
+	UP = 0
+	RIGHT = 1
+	DOWN = 2
+	LEFT = 3
 
 	def movePlayer(self):
 		# move the player (change position) and update the game board
-		if self.direction == Player.DIRECT_UP:
+		if self.direction == Player.UP:
 			self.game.board.grid[self.posY-1][self.posX] = self.playerid
 			self.posY = self.posY - 1
-		elif self.direction == Player.DIRECT_RIGHT:
+		elif self.direction == Player.RIGHT:
 			self.game.board.grid[self.posY][self.posX+1] = self.playerid
 			self.posX = self.posX + 1
-		elif self.direction == Player.DIRECT_DOWN:
+		elif self.direction == Player.DOWN:
 			self.game.board.grid[self.posY+1][self.posX] = self.playerid
 			self.posY = self.posY + 1
-		elif self.direction == Player.DIRECT_LEFT:
+		elif self.direction == Player.LEFT:
 			self.game.board.grid[self.posY][self.posX-1] = self.playerid
 			self.posX = self.posX - 1
 
@@ -50,24 +50,24 @@ class Player:
 
 	def wouldCollideSelf(self, nextDirection):
 		'''Check if the player would collide with their previous position going a particular direction'''
-		return (nextDirection == Player.DIRECT_UP and self.posY-1 == self.prevPos['y']) or \
-			(nextDirection == Player.DIRECT_RIGHT and self.posX+1 == self.prevPos['x']) or \
-			(nextDirection == Player.DIRECT_DOWN and self.posY+1 == self.prevPos['y']) or \
-			(nextDirection == Player.DIRECT_LEFT and self.posX-1 == self.prevPos['x'])
+		return (nextDirection == Player.UP and self.posY-1 == self.prevPos['y']) or \
+			(nextDirection == Player.RIGHT and self.posX+1 == self.prevPos['x']) or \
+			(nextDirection == Player.DOWN and self.posY+1 == self.prevPos['y']) or \
+			(nextDirection == Player.LEFT and self.posX-1 == self.prevPos['x'])
 
 	def wouldCollide(self, direction):
 		'''check if a player would collide with an obstacle if they move in a particular direction'''
-		return (direction == Player.DIRECT_UP and self.game.board.isObstacle(self.posX, self.posY-1)) or \
-			(direction == Player.DIRECT_RIGHT and self.game.board.isObstacle(self.posX+1, self.posY)) or \
-			(direction == Player.DIRECT_DOWN and self.game.board.isObstacle(self.posX, self.posY+1)) or \
-			(direction == Player.DIRECT_LEFT and self.game.board.isObstacle(self.posX-1, self.posY))
+		return (direction == Player.UP and self.game.board.isObstacle(self.posX, self.posY-1)) or \
+			(direction == Player.RIGHT and self.game.board.isObstacle(self.posX+1, self.posY)) or \
+			(direction == Player.DOWN and self.game.board.isObstacle(self.posX, self.posY+1)) or \
+			(direction == Player.LEFT and self.game.board.isObstacle(self.posX-1, self.posY))
 
 	def directionToNextLocation(self, posX, posY, direction):
 		'''converts current position and direction to the next position'''
-		if direction == Player.DIRECT_UP: return (posX, posY-1)
-		if direction == Player.DIRECT_RIGHT: return (posX+1, posY)
-		if direction == Player.DIRECT_DOWN: return (posX, posY+1)
-		if direction == Player.DIRECT_LEFT: return (posX-1, posY)
+		if direction == Player.UP: return (posX, posY-1)
+		if direction == Player.RIGHT: return (posX+1, posY)
+		if direction == Player.DOWN: return (posX, posY+1)
+		if direction == Player.LEFT: return (posX-1, posY)
 
 	def calculateDirectionTerritory(self, direction, opponentDirection):
 		''' Given a directions, calculate a player's predicted territory,
@@ -161,13 +161,13 @@ class Human(Player):
 	def event(self, event):
 		if event.type == pygame.KEYDOWN and len(self.directionQ) < self.maxDirectionQLen:
 			if event.key == self.ctl_up:
-				self.directionQ.append(Player.DIRECT_UP)
+				self.directionQ.append(Player.UP)
 			elif event.key == self.ctl_right:
-				self.directionQ.append(Player.DIRECT_RIGHT)
+				self.directionQ.append(Player.RIGHT)
 			elif event.key == self.ctl_down:
-				self.directionQ.append(Player.DIRECT_DOWN)
+				self.directionQ.append(Player.DOWN)
 			elif event.key == self.ctl_left:
-				self.directionQ.append(Player.DIRECT_LEFT)
+				self.directionQ.append(Player.LEFT)
 
 	def tick(self): #perform moving and collision calculations here
 
