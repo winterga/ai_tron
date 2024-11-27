@@ -1,7 +1,9 @@
 import pygame
+import random
 
 
 class Player:
+
     def __init__(self, gameObj, color, ID, x, y, direction):
         self.color = color
         self.ID = ID
