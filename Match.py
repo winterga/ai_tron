@@ -19,7 +19,7 @@ class Match:
 
         # check for any other collision situations and update positions
         for player in self.gameObj.players:
-            self.gameObj.players[player].checkForCollision(self.gameObj.players[player].direction)
+            self.gameObj.players[player].checkCollision(self.gameObj.players[player].direction)
             self.gameObj.players[player].movePlayer()
             
         # check if anyone is dead
@@ -37,7 +37,7 @@ class Match:
     def checkTie(self):
         nextPositions = []
         for player in self.gameObj.players:
-            nextPosition = self.gameObj.players[player].directionToNextLocation(self.gameObj.players[player].posX,self.gameObj.players[player].posY,self.gameObj.players[player].direction)
+            nextPosition = self.gameObj.players[player].convertDirectionToLocation(self.gameObj.players[player].direction)
             if nextPosition in nextPositions:
                 self.gameObj.board.drawTieSquare(nextPosition[0], nextPosition[1])
                 return True
