@@ -6,6 +6,8 @@ from Match import Match
 from Players import Player, Human, Bot
 
 
+
+
 class Tron:
     def __init__(self, xTiles, yTiles, tileSize):
 
@@ -98,6 +100,7 @@ class Tron:
                                     Player.LEFT, (pygame.K_UP, pygame.K_LEFT, pygame.K_DOWN, pygame.K_RIGHT))
             # PVE - 1 human and 1 bot
         elif matchType == 1:
+
             self.players[1] = Human(self, (220, 0, 30), 1, 3, 3, Player.RIGHT, (
                 pygame.K_UP, pygame.K_LEFT, pygame.K_DOWN, pygame.K_RIGHT))
             self.players[2] = Bot(
