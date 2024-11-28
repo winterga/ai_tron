@@ -34,7 +34,9 @@ class Player:
                 self.gameObj.board.grid[self.y - 1][self.x] = self.ID
                 self.y = self.y - 1
             case self.RIGHT:
+
                 self.gameObj.board.grid[self.y][self.x + 1] = self.ID
+
                 self.x = self.x + 1
             case self.DOWN:
                 self.gameObj.board.grid[self.y + 1][self.x] = self.ID
@@ -103,7 +105,9 @@ class Human(Player):
 
     def tick(self):
         while self.directionQueue:
-            if self.isInvalidDirection(self.direction) or self.directionQueue[0] == self.direction:
+
+            if self.isInvalidDirection(self.directionQueue[0]) or self.directionQueue[0] == self.direction:
+
                 self.directionQueue.pop(0)
             else:
                 self.direction = self.directionQueue.pop(0)
