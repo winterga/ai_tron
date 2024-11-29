@@ -3,9 +3,10 @@ from GameBoard import GameBoard
 from MainMenu import MainMenu
 from GameOverMenu import GameOverMenu
 from Match import Match
-from Players import Player, Human, Computer
-
-
+from Players import Player, Human, Computer, GenComputer
+import random
+from GeneticTraining import train_genetic
+from Stats import StatsScreen
 
 
 class Tron:
@@ -29,6 +30,7 @@ class Tron:
         self.state = 'MAIN_MENU' #state machine for different game states
         self.board = GameBoard(self, xTiles, yTiles, tileSize) #Build game board
         self.mainMenu = MainMenu(self)
+        self.statsScreen = StatsScreen(self)
         self.gameOverMenu = None
         self.match = None
         self.players = {} # playerId is the key
@@ -43,6 +45,12 @@ class Tron:
         self.EVE_Bot1Wins = 0
         self.EVE_Bot2Wins = 0
         self.EVE_Tie = 0
+        self.PVG_BotWins = 0
+        self.PVG_playerWins = 0
+        self.PVG_Tie = 0
+        self.EVG_nonGenWins = 0
+        self.EVG_GeneticWins = 0
+        self.EVG_Tie = 0
 
 		#Start initally at main menu
         self.switchToMenu(self.state)
@@ -61,13 +69,20 @@ class Tron:
                         self.mainMenu.eventTick(event)
                     case 'PLAYING':
                         self.match.event(event)
+                    case 'TRAINING_GENETIC':
+                        self.match.event(event)
                     case 'GAME_OVER':
                         self.gameOverMenu.event(event)
+                    case 'STATS_SCREEN':
+                        self.statsScreen.event(event)
+
                         
-            if self.state == 'MAIN_MENU':
+            if self.state == 'MAIN_MENU' or self.state == 'STATS_SCREEN':
                 pass
             if self.state == 'PLAYING':
                 self.match.tick()
+            if self.state == 'TRAINING_GENETIC' or self.state == 'TOURNAMENT':
+                continue
             
             pygame.display.flip()
             if self.state == 'PLAYING':
@@ -80,11 +95,15 @@ class Tron:
         quit()
         
     def switchToMenu(self, state):
+        self.screen.fill((0, 0, 0))
         self.state = state
         if self.state == 'MAIN_MENU':
             self.mainMenu.draw()
+        elif self.state == 'STATS_SCREEN':
+            self.statsScreen.draw()
         else:
             self.gameOverMenu.draw()
+
         
     def startMatch(self, matchType):
         self.board = GameBoard(self, self.xTiles, self.yTiles, self.tileSize)
@@ -102,12 +121,95 @@ class Tron:
         elif matchType == 2:
             self.players[1] = Computer(self, (220, 0, 30), 1, 3, 3, Player.RIGHT)
             self.players[2] = Computer(self, (90, 220, 50), 2, self.board.xTiles-4, self.board.yTiles-4, Player.LEFT)
+        elif matchType == 3:
+            self.state = 'TRAINING_GENETIC'
+            self.start_training(self)
+        elif matchType == 4:
+            self.players[1] = Human(self, (220, 0, 30), 1, 3, 3, Player.RIGHT, (pygame.K_UP, pygame.K_RIGHT, pygame.K_DOWN, pygame.K_LEFT))
+            # bot with best genome after training
+            self.players[2] = GenComputer(self, (90, 220, 50), 2, self.board.xTiles - 4, self.board.yTiles - 4, Player.LEFT, [0.20109869802412333, 0.5153579692588267, 0.6420286282024283])
+        elif matchType == 5:
+            self.players[1] = Computer(self, (220, 0, 30), 1, 3, 3, Player.RIGHT)
+            self.players[2] = GenComputer(self, (90, 220, 50), 2, self.board.xTiles - 4, self.board.yTiles - 4, Player.LEFT, [0.20109869802412333, 0.5153579692588267, 0.6420286282024283])
+        elif matchType == 6:
+            self.state = 'TOURNAMENT'
+            self.tournament_GenvRandom()
 
-		#Build match and set program state
-        self.match = Match(self, matchType)
-        self.state = 'PLAYING'
-        
-    
+        if (matchType != 3):
+            #Build match and set program state
+            self.match = Match(self, matchType)
+            self.state = 'PLAYING'
+
+    def tournament_GenvRandom(self):
+        for i in range(50):
+            self.board = GameBoard(self, self.xTiles, self.yTiles, self.tileSize)
+            self.players = {}
+            self.players[1] = Computer(self, (220, 0, 30), 1, 3, 3, Player.RIGHT)
+            self.players[2] = GenComputer(self, (90, 220, 50), 2, self.board.xTiles - 4, self.board.yTiles - 4, Player.LEFT, [0.20109869802412333, 0.5153579692588267, 0.6420286282024283])
+
+            match = Match(self, 2)
+            clock = pygame.time.Clock()
+            while match.active:
+                match.tick()
+
+                self.screen.fill((0, 0, 0))
+                self.board.drawGrid()
+                pygame.display.flip()
+                clock.tick(60)
+
+
+    def start_training(self, tron):
+        initial_population = [[random.random() for _ in range(3)] for _ in range(20)]
+        print("Starting genetic algorithm training...")
+
+        trained_population = train_genetic(
+            initial_population,
+            generations=30,
+            mutation_rate=0.2,
+            simulate_game=tron.simulate_genetic
+        )
+
+        print("Training complete!")
+        best_genome = trained_population[0]
+        print(f"Best genome: {best_genome}")
+        self.screen.fill((0,0,0))
+        self.switchToMenu("MAIN_MENU")
+
+    def simulate_genetic(self, genome1, genome2):
+        self.board = GameBoard(self, self.xTiles, self.yTiles, self.tileSize)
+        self.players = {}
+        self.players[1] = GenComputer(self, (220, 0, 30), 1, 3, 3, Player.RIGHT, genome1)
+        self.players[2] = GenComputer(self, (90, 220, 50), 2, self.board.xTiles - 4, self.board.yTiles - 4, Player.LEFT, genome2)
+
+        match = Match(self, 2)
+
+        match_ticks = 0
+        clock = pygame.time.Clock()
+
+        while match.active:
+            match.tick()
+
+            self.screen.fill((0, 0, 0))
+            self.board.drawGrid()
+            pygame.display.flip()
+            clock.tick(60)
+
+            match_ticks += 1
+
+        bot = self.players[1]
+        opponent = self.players[2]
+
+        survival_time = match_ticks if bot.alive else match_ticks // 2
+        wins = 1 if bot.alive and not opponent.alive else 0
+        territory = bot.calculateDirectionTerritory(bot.direction, random.choice(range(4)))
+
+        return {
+            'survival_time': survival_time,
+            'wins': wins,
+            'territory': territory,
+        }
+
+
 if __name__ == '__main__':
     tron = Tron(40, 40, 20)
     print("Game initialized")

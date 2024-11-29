@@ -1,5 +1,5 @@
 from GameOverMenu import GameOverMenu
-
+import pygame
 
 class Match:
     def __init__(self, gameObj, gameMode):
@@ -21,7 +21,7 @@ class Match:
         for player in self.gameObj.players:
             self.gameObj.players[player].checkForCollision(self.gameObj.players[player].direction)
             self.gameObj.players[player].movePlayer()
-            
+        
         # check if anyone is dead
         self.checkStatus(False)
 
@@ -54,28 +54,26 @@ class Match:
 
         # if both are dead (i.e. tie)
         if tieStatus or aliveCount == 0:
-            # render them hitting each other
-            # if tieStatus:
-            #     for player in self.gameObj.players:
-            #         self.gameObj.players[player].movePlayer()
-            #     self.gameObj.screen.fill((0,0,0))
-            #     self.gameObj.board.drawGrid()
-            #     self.gameObj.board.drawTieSquare(self.gameObj.players[1].posX,self.gameObj.players[1].posY)
 
             self.active = False
+            print("Tie detected or no players alive.")
             if self.gameMode == 1:
                 self.gameObj.PVE_Tie += 1
             elif self.gameMode == 0:
                 self.gameObj.PVP_Tie += 1
             elif self.gameMode == 2:
                 self.gameObj.EVE_Tie += 1
+            elif self.gameMode == 3:
+                self.gameObj.PVG_Tie += 1
+            elif self.gameMode == 4:
+                self.gameObj.EVG_Tie += 1
 
             self.gameObj.gameOverMenu = GameOverMenu(self.gameObj, "Nobody", self.gameMode)
             self.gameObj.switchToMenu("GAME_OVER")
         # if one is dead
         elif aliveCount == 1:
-            print("checkStatus")
             self.active = False
+            print("Single player alive. Ending match.")
             
             winner = ""
             for player in self.gameObj.players:
@@ -98,6 +96,16 @@ class Match:
                     self.gameObj.EVE_Bot1Wins += 1
                 elif winner == 2:
                     self.gameObj.EVE_Bot2Wins += 1
+            elif self.gameMode == 4:
+                if winner == 1:
+                    self.gameObj.PVG_BotWins += 1
+                elif winner == 2:
+                    self.gameObj.PVG_playerWins += 1
+            elif self.gameMode == 5:
+                if winner == 1:
+                    self.gameObj.EVG_nonGenWins += 1
+                elif winner == 2:
+                    self.gameObj.EVG_GeneticWins += 1
 
             self.gameObj.gameOverMenu = GameOverMenu(self.gameObj, "Player " + str(winner), self.gameMode)
             self.gameObj.switchToMenu("GAME_OVER")

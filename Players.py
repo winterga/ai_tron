@@ -189,8 +189,8 @@ class Computer(Player):
 	def tick(self):
 		'''select next direction'''
 		#self.strategyRandom()
-		#self.stategyMostTerritoryWithRand()
-		self.stategyMostTerritory()
+		# self.stategyMostTerritoryWithRand()
+		self.strategyMostTerritory()
 
 
 	def strategyRandom(self):
@@ -206,7 +206,7 @@ class Computer(Player):
 
 
 
-	def stategyMostTerritory(self):
+	def strategyMostTerritory(self):
 		maxArea = 0
 		bestDirection = 0
 
@@ -228,7 +228,7 @@ class Computer(Player):
 
 		self.direction = bestDirection
 
-	def stategyMostTerritoryWithRand(self):
+	def strategyMostTerritoryWithRand(self):
 		dirs = [] # list of possible directions
 		opponentId = (set(self.game.players)-set([self.playerid])).pop()
 		
@@ -271,3 +271,50 @@ class Computer(Player):
 				self.direction = dirs[-1][1]
 		elif len(dirs) == 1: #only one valid direction
 			self.direction = dirs[0][1]
+
+class GenComputer(Computer):
+	def __init__(self, gameObj, color, playerid, x, y, initialDirection, genome):
+		super(GenComputer, self).__init__(gameObj, color, playerid, x, y, initialDirection)
+		self.genome = genome
+
+	def tick(self):
+		self.strategyGenetic()
+
+	def strategyGenetic(self):
+		max_score = -float('inf')
+		best_direction = None
+		opponentId = (set(self.game.players) - {self.playerid}).pop()
+
+
+		for direction in range(4):
+			if self.wouldCollide(direction):  # Skip if this direction leads to a collision
+				continue
+
+			max_attempts = 10
+			attempts = 0
+            # Generate a random direction for the opponent
+			opponent_direction = random.choice(range(4))
+			while self.game.players[opponentId].wouldCollide(opponent_direction) and attempts < max_attempts:
+				opponent_direction = random.choice(range(4))
+				attempts += 1
+
+			if attempts >= max_attempts:
+				opponent_direction = Player.UP
+
+            # Calculate territory, survival, and aggression scores
+			territory = self.calculateDirectionTerritory(direction, opponent_direction)
+			survival = not self.wouldCollide(direction)  # Boolean: 1 if safe, else 0
+			aggression = -abs(direction - opponent_direction)  # Example aggression metric
+
+            # Weighted score based on the genome
+			score = (
+                self.genome[0] * territory +
+                self.genome[1] * survival +
+                self.genome[2] * aggression
+            )
+
+			if score > max_score:
+				max_score = score
+				best_direction = direction
+			
+			self.direction = best_direction  # Update the bot's direction

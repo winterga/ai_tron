@@ -6,7 +6,7 @@ class MainMenu:
 
 		self.font = pygame.font.SysFont('swmono', 34)
 
-		self.menuList = ['Player vs Player', 'Player vs AI', 'AI vs AI', 'Stats']
+		self.menuList = ['Player vs Player', 'Player vs AI', 'AI vs AI', 'Train AI w Genetic Algorithm', 'play vs genetic','territory vs. genetic','tournament' , 'Stats']
 		print(enumerate(self.menuList))
 		self.items = [] #text objects, a list of lists: [text, bitmap, (width, height), (posx, posy)]
 		self.activeItem = 0
@@ -48,8 +48,10 @@ class MainMenu:
 				self.game.screen.fill((0,0,0))
 				self.draw()
 			
+			if event.key == pygame.K_RETURN and self.activeItem == 7:
+				self.game.switchToMenu('STATS_SCREEN')
 			#select the entry, start the match
-			if event.key == pygame.K_RETURN:
+			elif event.key == pygame.K_RETURN:
 				self.game.startMatch(self.activeItem) #match type is equal to the element's ID
 
 	def draw(self):
