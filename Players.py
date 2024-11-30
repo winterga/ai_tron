@@ -34,7 +34,9 @@ class Player:
                 self.gameObj.board.grid[self.y - 1][self.x] = self.ID
                 self.y = self.y - 1
             case self.RIGHT:
-                self.gameObj.board.grid[self.y][(self.x + 1)] = self.ID
+
+                self.gameObj.board.grid[self.y][self.x + 1] = self.ID
+
                 self.x = self.x + 1
             case self.DOWN:
                 self.gameObj.board.grid[self.y + 1][self.x] = self.ID
@@ -55,6 +57,10 @@ class Player:
             (direction == Player.DOWN and self.gameObj.board.isObstacle(self.x, self.y + 1)) or \
             (direction == Player.LEFT and self.gameObj.board.isObstacle(
                 self.x - 1, self.y))
+
+    def checkCollision(self, direction):
+        if self.isCollision(direction):
+            self.alive = False  # kill player
 
     def convertDirectionToLocation(self, direction):
         match direction:
@@ -254,7 +260,9 @@ class Human(Player):
 
     def tick(self):
         while self.directionQueue:
+
             if self.isInvalidDirection(self.directionQueue[0]) or self.directionQueue[0] == self.direction:
+
                 self.directionQueue.pop(0)
             else:
                 self.direction = self.directionQueue.pop(0)
