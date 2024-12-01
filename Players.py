@@ -122,6 +122,9 @@ class Player:
             start = self.convertDirectionToLocation(self.gameObj.players[playerID].x, self.gameObj.players[playerID].y, opponentDirection)
             qs[playerID-1].append((start, 0))
             
+            
+        # start bfs
+        depth = 0
         while sum(map(len, qs)): # while there are still locations to explore
             seenThisLayer = {}
             for playerID in range(nplayers):
@@ -164,118 +167,76 @@ class Player:
     def event(self, event):
         pass
 
-class Bot(Player):
-	def __init__(self, gameObj, color, playerid, x, y, initialDirection, deepQModel=None):
-		super(Bot, self).__init__(gameObj, color, playerid, x, y, initialDirection)
-		self.deepQModel = deepQModel
+# ----- from DeepQ Merge -----
 
-	def deepQStrategy(self, gameState):
-		state = self.game.getEnvState()
-		if gameState == 'TRAINING':
-			self.direction = self.deepQModel.act(state, self.playerid)
-			# print(self.direction)
-		else:
-			print("Predicting direction")
-			valid_actions = [
-            action for action in range(4) 
-            if not self.game.players[self.playerid].wouldCollide(action)
-        	]
-			print(valid_actions)
-			self.direction = self.deepQModel.predict(state, valid_actions)
+# class Bot(Player):
+# 	def __init__(self, gameObj, color, playerid, x, y, initialDirection, deepQModel=None):
+# 		super(Bot, self).__init__(gameObj, color, playerid, x, y, initialDirection)
+# 		self.deepQModel = deepQModel
+
+# 	def deepQStrategy(self, gameState):
+# 		state = self.game.getEnvState()
+# 		if gameState == 'TRAINING':
+# 			self.direction = self.deepQModel.act(state, self.playerid)
+# 			# print(self.direction)
+# 		else:
+# 			print("Predicting direction")
+# 			valid_actions = [
+#             action for action in range(4) 
+#             if not self.game.players[self.playerid].wouldCollide(action)
+#         	]
+# 			print(valid_actions)
+# 			self.direction = self.deepQModel.predict(state, valid_actions)
 			
-			print("Predicted direction: ", self.direction)
+# 			print("Predicted direction: ", self.direction)
     
-	def tick(self, gameState):
-        # print("Bot tick")
-        # print(self.ID)
-		if self.deepQModel is None:
-            # print("No model provided for DeepQStrategy... using most territory strategy")
-			self.strategyMostTerritory()
-			# self.strategyRandom()
-		else:
-			self.deepQStrategy(gameState)
+# 	def tick(self, gameState):
+#         # print("Bot tick")
+#         # print(self.ID)
+# 		if self.deepQModel is None:
+#             # print("No model provided for DeepQStrategy... using most territory strategy")
+# 			self.strategyMostTerritory()
+# 			# self.strategyRandom()
+# 		else:
+# 			self.deepQStrategy(gameState)
             
-        ## Put other strategies here
+#         ## Put other strategies here
 
 
-	def strategyRandom(self):
-		dir = list(range(0, 4))
+# 	def strategyRandom(self):
+# 		dir = list(range(0, 4))
 		
-		# 10% chance of changing directions
-		if random.randint(1, 10) == 1:
-			self.direction = dir[random.randint(0, len(dir)-1)]
+# 		# 10% chance of changing directions
+# 		if random.randint(1, 10) == 1:
+# 			self.direction = dir[random.randint(0, len(dir)-1)]
 		
-		# if we would collide, pick a new random direction
-		while dir and self.wouldCollide(self.direction):
-			self.direction = dir.pop(random.randint(0, len(dir)-1))
+# 		# if we would collide, pick a new random direction
+# 		while dir and self.wouldCollide(self.direction):
+# 			self.direction = dir.pop(random.randint(0, len(dir)-1))
 
 
 
-	def strategyMostTerritory(self):
-		maxArea = 0
-		bestDirection = 0
+# 	def strategyMostTerritory(self):
+# 		maxArea = 0
+# 		bestDirection = 0
 
-		opponentId = (set(self.game.players)-set([self.playerid])).pop()
+# 		opponentId = (set(self.game.players)-set([self.playerid])).pop()
 		
-		for direction in range(0,4):
-			if self.wouldCollide(direction): continue
+# 		for direction in range(0,4):
+# 			if self.wouldCollide(direction): continue
 
-			#generate random direction for opponent (assumes only 2 players)
-			a = list(range(0,4))
-			opdir = a.pop(random.randint(0, 3))
-			while a and self.game.players[opponentId].wouldCollide(opdir):
-				opdir = a.pop(random.randint(0, len(a)-1))
+# 			#generate random direction for opponent (assumes only 2 players)
+# 			a = list(range(0,4))
+# 			opdir = a.pop(random.randint(0, 3))
+# 			while a and self.game.players[opponentId].wouldCollide(opdir):
+# 				opdir = a.pop(random.randint(0, len(a)-1))
 
-			area = self.calculateDirectionTerritory(direction, opdir)
-			if area > maxArea:
-				bestDirection = direction
-				maxArea = area
+# 			area = self.calculateDirectionTerritory(direction, opdir)
+# 			if area > maxArea:
+# 				bestDirection = direction
+# 				maxArea = area
 
-		self.direction = bestDirection
-
-	def strategyMostTerritoryWithRand(self):
-		dirs = [] # list of possible directions
-		opponentId = (set(self.game.players)-set([self.playerid])).pop()
-		
-		# test all possible directions for self
-		for direction in range(0,4):
-			if self.wouldCollide(direction): continue
-
-			#generate random direction for opponent (assumes only 2 players)
-			b = list(range(0,4))
-			opdir = b.pop(random.randint(0, 3))
-			while b and self.game.players[opponentId].wouldCollide(opdir):
-				opdir = b.pop(random.randint(0, len(b)-1))
-			
-			# append direction tuple: (predictedTerritory, direction)
-			dirs.append((self.calculateDirectionTerritory(direction, opdir), direction))
-		
-		# if we have more than one direction that wouldnt kill us
-		if len(dirs) > 1:
-			dirs.sort() # sort by order of predictedTerritory
-			print(str(dirs))
-			best = dirs[-1][0] # 'best' direction
-			
-		
-			# if the current direction has the same value as the 'best' direction,
-			# prefer staying in the same direction, makes movement less erratic
-			i = len(dirs) - 2
-			while i>=0: 
-				if dirs[i][0] < best:
-					break; #could not find current direction in top directions
-				if dirs[i][1] == self.direction:
-					return #direction stays the same
-				i -= 1
-
-			# if the next best move is within 10% of the value of the best move, there
-			# is a 20% chance that we will select that move
-			if dirs[-2][0] > dirs[-1][0]-dirs[-1][0]//10 and random.randint(1, 5) == 1:
-				self.direction = dirs[-2][1]
-				print("imperfect:", dirs[-2][0], "vs", dirs[-1][0])
-			else:
-				self.direction = dirs[-1][1]
-		elif len(dirs) == 1: #only one valid direction
-			self.direction = dirs[0][1]
+# 		self.direction = bestDirection
 
 class PruneComputer(Player):
     def __init__(self, gameObj, color, ID, x, y, direction):
@@ -843,14 +804,71 @@ class aStarComputer(Player):
 
 
 class Bot(Player):
-    def __init__(self, gameObj, color, ID, x, y, direction):
+    def __init__(self, gameObj, color, ID, x, y, direction, deepQModel=None):
         super().__init__(gameObj, color, ID, x, y, direction)
         self.max_depth = 5  # Adjust this to control look-ahead depth
+        self.deepQModel = deepQModel
+        
+    def deepQStrategy(self, gameState):
+        state = self.gameObj.getEnvState()
+        if gameState == 'TRAINING':
+            self.direction = self.deepQModel.act(state, self.ID)
+        else:
+            print("Predicting direction")
+            valid_actions = [
+            action for action in range(4) 
+            if not self.gameObj.players[self.ID].isCollision(action)
+        	]
+            print(valid_actions)
+            self.direction = self.deepQModel.predict(state, valid_actions)
+            print("Predicted direction: ", self.direction)
+    
+    def strategyRandom(self):
+        dir = list(range(0, 4))
+        
+        # 10% chance of changing directions
+        if random.randint(1, 10) == 1:
+            self.direction = dir[random.randint(0, len(dir)-1)]
+            
+        # if we would collide, pick a new random direction
+        while dir and self.isCollision(self.direction):
+            self.direction = dir.pop(random.randint(0, len(dir)-1))
+            
+    
+    def strategyMostTerritory(self):
+        maxArea = 0
+        bestDirection = 0
+        
+        opponentId = (set(self.gameObj.players)-set([self.ID])).pop()
+
+        
+        for direction in range(0,4):
+            if self.isCollision(direction): continue
+            
+            #generate random direction for opponent (assumes only 2 players)
+            
+            a = list(range(0,4))
+            opdir = a.pop(random.randint(0, 3))
+            while a and self.gameObj.players[opponentId].isCollision(opdir):
+                opdir = a.pop(random.randint(0, len(a)-1))
+                
+            area = self.calculateDirectionTerritory(direction, opdir)
+            if area > maxArea:
+                bestDirection = direction
+                maxArea = area
+                
+        self.direction = bestDirection
 
     def tick(self):
-        best_move = self.decision()
-        if best_move is not None:
-            self.direction = best_move
+        if self.deepQModel is None:
+            if self.gameObj.state == 'TRAINING':
+                self.strategyMostTerritory()
+            else:
+                best_move = self.decision()
+                if best_move is not None:
+                    self.direction = best_move
+        else:
+            self.deepQStrategy(self.gameObj.state)
 
     def decision(self):
         best_value = float('-inf')

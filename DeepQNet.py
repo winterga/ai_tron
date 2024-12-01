@@ -74,7 +74,7 @@ class DeepQAgent:
     def act(self, state, playerid=2):
         valid_actions = [
             action for action in range(self.action_size) 
-            if not self.gameObj.players[playerid].wouldCollide(action)
+            if not self.gameObj.players[playerid].isCollision(action)
         ]
         
         if np.random.rand() <= self.epsilon: # explore; epsilon decides exploration threshold

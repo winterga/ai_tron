@@ -74,6 +74,11 @@ class Tron:
         self.ABVNN_ABWins = 0
         self.ABVNN_NNWins = 0
         self.ABVNN_Tie = 0
+        
+        self.DqVDq_Dq1Wins = 0
+        self.DqVDq_Dq2Wins = 0
+        self.DqVDq_Tie = 0
+        
 
         self.best_genome = [0.42430839081823557,
                             0.6795954452427644, 0.8502043539767576]
@@ -203,7 +208,6 @@ class Tron:
             for player_id, player in self.players.items():
                 if player.alive:
                     opponent = [p for p in self.players.values() if p.ID != player_id][0]
-                    territory = player.calculateDirectionTerritory(player.direction, opponent.direction)
                     rewards[player_id] = 100   # Reward the winner
                 else:
                     rewards[player_id] = -150  # Penalize the loser
@@ -213,8 +217,8 @@ class Tron:
                 if player.alive:
                     opponent = [p for p in self.players.values() if p.ID != player_id][0]
                     territory = player.calculateDirectionTerritory(player.direction, opponent.direction)
-                    distance_to_wall = player.distanceToWall(player.x, player.y, player.direction)
-                    rewards[player_id] = 1 + 0.001 * territory + 0.005 * distance_to_wall
+                    distance_to_wall = player.distanceToClosestWall(player.x, player.y)
+                    rewards[player_id] = 0.5 + 0.001 * territory + 0.005 * distance_to_wall
 
         # Check if the game is over
         done = not self.match.active
