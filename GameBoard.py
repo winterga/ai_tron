@@ -62,3 +62,16 @@ class GameBoard:
             return True
         else:
             return (self.grid[y][x] != 0)
+        
+    def copy(self):
+        new_board = GameBoard(self.gameObj, self.xTiles, self.yTiles, self.tileSize)
+        new_board.grid = [row[:] for row in self.grid]  # Deep copy of the grid
+        return new_board
+
+    def getBotTrail(self, playerid):
+        trail = []
+        for y in range(self.yTiles):
+            for x in range(self.xTiles):
+                if self.grid[y][x] == playerid:
+                    trail.append((x, y))
+        return trail

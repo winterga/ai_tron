@@ -188,10 +188,7 @@ class Computer(Player):
 
 	def tick(self):
 		'''select next direction'''
-		#self.strategyRandom()
-		# self.stategyMostTerritoryWithRand()
-		self.strategyMostTerritory()
-
+		self.strategyRandom()
 
 	def strategyRandom(self):
 		dir = list(range(0, 4))
@@ -204,74 +201,6 @@ class Computer(Player):
 		while dir and self.wouldCollide(self.direction):
 			self.direction = dir.pop(random.randint(0, len(dir)-1))
 
-
-
-	def strategyMostTerritory(self):
-		maxArea = 0
-		bestDirection = 0
-
-		opponentId = (set(self.game.players)-set([self.playerid])).pop()
-		
-		for direction in range(0,4):
-			if self.wouldCollide(direction): continue
-
-			#generate random direction for opponent (assumes only 2 players)
-			a = list(range(0,4))
-			opdir = a.pop(random.randint(0, 3))
-			while a and self.game.players[opponentId].wouldCollide(opdir):
-				opdir = a.pop(random.randint(0, len(a)-1))
-
-			area = self.calculateDirectionTerritory(direction, opdir)
-			if area > maxArea:
-				bestDirection = direction
-				maxArea = area
-
-		self.direction = bestDirection
-
-	def strategyMostTerritoryWithRand(self):
-		dirs = [] # list of possible directions
-		opponentId = (set(self.game.players)-set([self.playerid])).pop()
-		
-		# test all possible directions for self
-		for direction in range(0,4):
-			if self.wouldCollide(direction): continue
-
-			#generate random direction for opponent (assumes only 2 players)
-			b = list(range(0,4))
-			opdir = b.pop(random.randint(0, 3))
-			while b and self.game.players[opponentId].wouldCollide(opdir):
-				opdir = b.pop(random.randint(0, len(b)-1))
-			
-			# append direction tuple: (predictedTerritory, direction)
-			dirs.append((self.calculateDirectionTerritory(direction, opdir), direction))
-		
-		# if we have more than one direction that wouldnt kill us
-		if len(dirs) > 1:
-			dirs.sort() # sort by order of predictedTerritory
-			print(str(dirs))
-			best = dirs[-1][0] # 'best' direction
-			
-		
-			# if the current direction has the same value as the 'best' direction,
-			# prefer staying in the same direction, makes movement less erratic
-			i = len(dirs) - 2
-			while i>=0: 
-				if dirs[i][0] < best:
-					break; #could not find current direction in top directions
-				if dirs[i][1] == self.direction:
-					return #direction stays the same
-				i -= 1
-
-			# if the next best move is within 10% of the value of the best move, there
-			# is a 20% chance that we will select that move
-			if dirs[-2][0] > dirs[-1][0]-dirs[-1][0]//10 and random.randint(1, 5) == 1:
-				self.direction = dirs[-2][1]
-				print("imperfect:", dirs[-2][0], "vs", dirs[-1][0])
-			else:
-				self.direction = dirs[-1][1]
-		elif len(dirs) == 1: #only one valid direction
-			self.direction = dirs[0][1]
-
 class GenComputer(Computer):
 	def __init__(self, gameObj, color, playerid, x, y, initialDirection, genome):
 		super(GenComputer, self).__init__(gameObj, color, playerid, x, y, initialDirection)
@@ -280,19 +209,69 @@ class GenComputer(Computer):
 	def tick(self):
 		self.strategyGenetic()
 
+	def distanceToSelf(self, direction):
+		next_x, next_y = self.directionToNextLocation(self.posX, self.posY, direction)
+
+		min_distance = float('inf')
+
+		for point in self.game.board.getBotTrail(self.playerid):
+			trail_x, trail_y = point
+			distance = abs(next_x - trail_x) + abs(next_y - trail_y)
+			min_distance = min(min_distance, distance)
+
+		return min_distance
+	
+	def predictTrap(self, direction):
+		next_x, next_y = self.directionToNextLocation(self.posX, self.posY, direction)
+
+		temp_board = self.game.board.copy()
+		temp_board.grid[next_y][next_x] = self.playerid
+
+		reachable_area = self.calculateReachableArea(next_x, next_y, temp_board)
+
+		trap_threshold = 30
+
+		return reachable_area < trap_threshold
+
+	def calculateReachableArea(self, x, y, board):
+		visited = set()
+		queue = [(x, y)]
+		reachable_count = 0
+
+		while queue:
+			cx, cy = queue.pop(0)
+
+			if (cx, cy) in visited:
+				continue
+
+			visited.add((cx, cy))
+			if not board.isObstacle(cx, cy) or (cx == x and cy == y):
+				reachable_count += 1
+
+				neighbors = [
+					(cx + 1, cy), (cx - 1, cy),
+					(cx, cy + 1), (cx, cy - 1)
+				]
+				for nx, ny in neighbors:
+					if (nx, ny) not in visited:
+						queue.append((nx, ny))
+
+		return reachable_count
+
 	def strategyGenetic(self):
 		max_score = -float('inf')
 		best_direction = None
 		opponentId = (set(self.game.players) - {self.playerid}).pop()
 
-
 		for direction in range(4):
-			if self.wouldCollide(direction):  # Skip if this direction leads to a collision
+			if self.wouldCollide(direction):
+				continue
+				
+			if self.predictTrap(direction):
 				continue
 
 			max_attempts = 10
 			attempts = 0
-            # Generate a random direction for the opponent
 			opponent_direction = random.choice(range(4))
 			while self.game.players[opponentId].wouldCollide(opponent_direction) and attempts < max_attempts:
 				opponent_direction = random.choice(range(4))
@@ -301,20 +280,22 @@ class GenComputer(Computer):
 			if attempts >= max_attempts:
 				opponent_direction = Player.UP
 
-            # Calculate territory, survival, and aggression scores
-			territory = self.calculateDirectionTerritory(direction, opponent_direction)
-			survival = not self.wouldCollide(direction)  # Boolean: 1 if safe, else 0
-			aggression = -abs(direction - opponent_direction)  # Example aggression metric
+			distance_to_self = self.distanceToSelf(direction)
+			survival = 1 if not self.wouldCollide(direction) else 0
+			self_collision_penalty = -10 / (distance_to_self + 1)
+			aggression = -abs(direction - opponent_direction)
 
-            # Weighted score based on the genome
 			score = (
-                self.genome[0] * territory +
-                self.genome[1] * survival +
-                self.genome[2] * aggression
-            )
+				self.genome[0] * survival +
+				self.genome[1] * aggression +
+				self_collision_penalty
+			)
 
 			if score > max_score:
 				max_score = score
 				best_direction = direction
-			
-			self.direction = best_direction  # Update the bot's direction
+
+		if best_direction is None:
+			best_direction = self.direction
+
+		self.direction = best_direction

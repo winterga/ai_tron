@@ -3,8 +3,8 @@ import pygame
 class StatsScreen:
     def __init__(self, game):
         self.game = game
-        self.font_title = pygame.font.SysFont('Arial', 40, True)
-        self.font_stats = pygame.font.SysFont('Arial', 25)
+        self.font_title = pygame.font.SysFont('Arial', 30, True)
+        self.font_stats = pygame.font.SysFont('Arial', 20)
         self.font_instructions = pygame.font.SysFont('Arial', 20, True)
 
     def draw(self):
@@ -23,22 +23,48 @@ class StatsScreen:
             f"PVP Player 1 Wins: {self.game.PVP_Player1Wins}",
             f"PVP Player 2 Wins: {self.game.PVP_Player2Wins}",
             f"PVP Ties: {self.game.PVP_Tie}",
-            f"EVE Bot 1 Wins: {self.game.EVE_Bot1Wins}",
-            f"EVE Bot 2 Wins: {self.game.EVE_Bot2Wins}",
-            f"EVE Ties: {self.game.EVE_Tie}",
-            f"PVG Player Wins: {self.game.PVG_playerWins}",
-            f"PVG Bot Wins: {self.game.PVG_BotWins}",
-            f"PVG Ties: {self.game.PVG_Tie}",
-            f"EVG Non-Genetic Wins: {self.game.EVG_nonGenWins}",
-            f"EVG Genetic Wins: {self.game.EVG_GeneticWins}",
-            f"EVG Ties: {self.game.EVG_Tie}",
+            f"A* vs Genetic - A* Wins: {self.game.AStarVGenetic_AStarWins}",
+            f"A* vs Genetic - Genetic Wins: {self.game.AStarVGenetic_GeneticWins}",
+            f"A* vs Genetic - Ties: {self.game.AStarVGenetic_Tie}",
+            f"AB vs Genetic - AB Wins: {self.game.ABVGenetic_ABWins}",
+            f"AB vs Genetic - Genetic Wins: {self.game.ABVGenetic_GeneticWins}",
+            f"AB vs Genetic - Ties: {self.game.ABVGenetic_Tie}",
+            f"NN vs Genetic - NN Wins: {self.game.NNVGenetic_NNWins}",
+            f"NN vs Genetic - Genetic Wins: {self.game.NNVGenetic_GeneticWins}",
+            f"NN vs Genetic - Ties: {self.game.NNVGenetic_Tie}",
+            f"A* vs AB - A* Wins: {self.game.AStarVAB_AStarWins}",
+            f"A* vs AB - AB Wins: {self.game.AStarVAB_ABWins}",
+            f"A* vs AB - Ties: {self.game.AStarVAB_Tie}",
+            f"A* vs NN - A* Wins: {self.game.AStarVNN_AStarWins}",
+            f"A* vs NN - NN Wins: {self.game.AStarVNN_NNWins}",
+            f"A* vs NN - Ties: {self.game.AStarVNN_Tie}",
+            f"AB vs NN - AB Wins: {self.game.ABVNN_ABWins}",
+            f"AB vs NN - NN Wins: {self.game.ABVNN_NNWins}",
+            f"AB vs NN - Ties: {self.game.ABVNN_Tie}"
         ]
 
+        # Split stats into two columns
+        mid_index = len(stats) // 2
+        column_1 = stats[:mid_index]
+        column_2 = stats[mid_index:]
+
+        # Starting positions
         start_y = 100
         line_spacing = 30
-        for i, stat in enumerate(stats):
+        column_1_x = 50
+        column_2_x = self.game.scr_x // 2 + 50
+
+        # Render column 1
+        for i, stat in enumerate(column_1):
+            y_position = start_y + i * line_spacing
             stat_surface = self.font_stats.render(stat, True, (200, 200, 200))  # Light gray text
-            self.game.screen.blit(stat_surface, (50, start_y + i * line_spacing))
+            self.game.screen.blit(stat_surface, (column_1_x, y_position))
+
+        # Render column 2
+        for i, stat in enumerate(column_2):
+            y_position = start_y + i * line_spacing
+            stat_surface = self.font_stats.render(stat, True, (200, 200, 200))  # Light gray text
+            self.game.screen.blit(stat_surface, (column_2_x, y_position))
 
         # Instructions to return to the main menu
         instructions_surface = self.font_instructions.render(
@@ -52,8 +78,5 @@ class StatsScreen:
         pygame.display.flip()
 
     def event(self, event):
-        """
-        Handle user input for the stats screen.
-        """
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             self.game.switchToMenu("MAIN_MENU")  # Return to the main menu

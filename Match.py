@@ -62,11 +62,19 @@ class Match:
             elif self.gameMode == 0:
                 self.gameObj.PVP_Tie += 1
             elif self.gameMode == 2:
-                self.gameObj.EVE_Tie += 1
-            elif self.gameMode == 3:
-                self.gameObj.PVG_Tie += 1
-            elif self.gameMode == 4:
-                self.gameObj.EVG_Tie += 1
+                self.gameObj.GVG_Tie += 1
+            elif self.gameMode == 10:
+                self.gameObj.AStarVGenetic_Tie += 1
+            elif self.gameMode == 5:
+                self.gameObj.ABVGenetic_Tie += 1
+            elif self.gameMode == 6:
+                self.gameObj.NNVGenetic_Tie += 1
+            elif self.gameMode == 7:
+                self.gameObj.AStarVAB_Tie += 1
+            elif self.gameMode == 8:
+                self.gameObj.AStarVNN_Tie += 1
+            elif self.gameMode == 9:
+                self.gameObj.ABVNN_Tie += 1
 
             self.gameObj.gameOverMenu = GameOverMenu(self.gameObj, "Nobody", self.gameMode)
             self.gameObj.switchToMenu("GAME_OVER")
@@ -93,19 +101,39 @@ class Match:
                     self.gameObj.PVP_Player2Wins += 1
             elif self.gameMode == 2:
                 if winner == 1:
-                    self.gameObj.EVE_Bot1Wins += 1
+                    self.gameObj.GVG_Bot1Wins += 1
                 elif winner == 2:
-                    self.gameObj.EVE_Bot2Wins += 1
-            elif self.gameMode == 4:
+                    self.gameObj.GVG_Bot2Wins += 1
+            elif self.gameMode == 10:
                 if winner == 1:
-                    self.gameObj.PVG_BotWins += 1
+                    self.gameObj.AStarVGenetic_AStarWins += 1
                 elif winner == 2:
-                    self.gameObj.PVG_playerWins += 1
+                    self.gameObj.AStarVGenetic_GeneticWins += 1
             elif self.gameMode == 5:
                 if winner == 1:
-                    self.gameObj.EVG_nonGenWins += 1
+                    self.gameObj.ABVGenetic_ABWins += 1
                 elif winner == 2:
-                    self.gameObj.EVG_GeneticWins += 1
+                    self.gameObj.ABVGenetic_GeneticWins += 1
+            elif self.gameMode == 6:
+                if winner == 1:
+                    self.gameObj.NNVGenetic_NNWins += 1
+                elif winner == 2:
+                    self.gameObj.NNVGenetic_GeneticWins += 1
+            elif self.gameMode == 7:
+                if winner == 1:
+                    self.gameObj.AStarVAB_AStarWins += 1
+                elif winner == 2:
+                    self.gameObj.AStarVAB_ABWins += 1
+            elif self.gameMode == 8:
+                if winner == 1:
+                    self.gameObj.AStarVNN_AStarWins += 1
+                elif winner == 2:
+                    self.gameObj.AStarVNN_NNWins += 1
+            elif self.gameMode == 9:
+                if winner == 1:
+                    self.gameObj.ABVNN_ABWins += 1
+                elif winner == 2:
+                    self.gameObj.ABVNN_NNWins += 1
 
             self.gameObj.gameOverMenu = GameOverMenu(self.gameObj, "Player " + str(winner), self.gameMode)
             self.gameObj.switchToMenu("GAME_OVER")
