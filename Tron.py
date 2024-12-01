@@ -3,7 +3,7 @@ from GameBoard import GameBoard
 from MainMenu import MainMenu
 from GameOverMenu import GameOverMenu
 from Match import Match
-from Players import Player, Human, Computer, GenComputer
+from Players import Player, Human, Computer, GenComputer, Bot
 import random
 from GeneticTraining import train_genetic
 from Stats import StatsScreen
@@ -11,30 +11,31 @@ from Stats import StatsScreen
 
 class Tron:
     def __init__(self, xTiles, yTiles, tileSize):
-        
+
         # initialize the pygame module
         pygame.init()
         logo = pygame.image.load("./tron_logo.png")
         pygame.display.set_icon(logo)
         pygame.display.set_caption("IntelliTron")
-        
+
         self.xTiles = xTiles
         self.yTiles = yTiles
         self.tileSize = tileSize
 
-		#Set window size
+        # Set window size
         self.scr_x = tileSize*xTiles
         self.scr_y = tileSize*yTiles
         self.screen = pygame.display.set_mode((self.scr_x, self.scr_y))
-        
-        self.state = 'MAIN_MENU' #state machine for different game states
-        self.board = GameBoard(self, xTiles, yTiles, tileSize) #Build game board
+
+        self.state = 'MAIN_MENU'  # state machine for different game states
+        self.board = GameBoard(self, xTiles, yTiles,
+                               tileSize)  # Build game board
         self.mainMenu = MainMenu(self)
         self.gameOverMenu = None
         self.match = None
-        self.players = {} # playerId is the key
+        self.players = {}  # playerId is the key
 
-		#Initialize stats values
+        # Initialize stats values
         self.PVE_PlayerWins = 0
         self.PVE_BotWins = 0
         self.PVE_Tie = 0
@@ -73,9 +74,9 @@ class Tron:
 
         self.statsScreen = StatsScreen(self)
 
-		#Start initally at main menu
+        # Start initally at main menu
         self.switchToMenu(self.state)
-        
+
     def eventLoop(self):
         clock = pygame.time.Clock()
         active = True
@@ -114,7 +115,7 @@ class Tron:
         # game not active
         pygame.quit()
         quit()
-        
+
     def switchToMenu(self, state):
         self.screen.fill((0, 0, 0))
         self.state = state
@@ -125,16 +126,17 @@ class Tron:
         else:
             self.gameOverMenu.draw()
 
-        
     def startMatch(self, matchType):
         self.board = GameBoard(self, self.xTiles, self.yTiles, self.tileSize)
         self.players = {}
-		#Create players/Computers per match type.
-		#PVP - 2 humans
+        # Create players/Computers per match type.
+        # PVP - 2 humans
         if matchType == 0:
-            self.players[1] = Human(self, (220, 0, 30), 1, 3, 3, Player.RIGHT, (pygame.K_w, pygame.K_d, pygame.K_s, pygame.K_a))
-            self.players[2] = Human(self, (30, 220, 0), 2, self.board.xTiles-4, self.board.yTiles-4, Player.LEFT, (pygame.K_UP, pygame.K_RIGHT, pygame.K_DOWN, pygame.K_LEFT))
-		#PVE - 1 human and 1 bot
+            self.players[1] = Human(self, (220, 0, 30), 1, 3, 3, Player.RIGHT,
+                                    (pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d))
+            self.players[2] = Human(self, (30, 220, 0), 2, self.board.xTiles-4, self.board.yTiles-4,
+                                    Player.LEFT, (pygame.K_UP, pygame.K_LEFT, pygame.K_DOWN, pygame.K_RIGHT))
+            # PVE - 1 human and 1 bot
         elif matchType == 1:
             self.players[1] = Human(self, (220, 0, 30), 1, 3, 3, Player.RIGHT, (pygame.K_UP, pygame.K_RIGHT, pygame.K_DOWN, pygame.K_LEFT))
             self.players[2] = Computer(self, (30, 220, 0), 2, self.board.xTiles-4, self.board.yTiles-4, Player.LEFT)
@@ -311,6 +313,3 @@ if __name__ == '__main__':
     tron = Tron(40, 40, 20)
     print("Game initialized")
     tron.eventLoop()
-            
-                        
-                        

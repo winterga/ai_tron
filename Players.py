@@ -1,216 +1,296 @@
 import pygame
 import random
 
+
 class Player:
-	def __init__(self, gameObj, color, playerid, x, y, initialDirection):
-		self.color = color # rgb color of player
-		self.playerid = playerid # player id indexed from 1
-		self.game = gameObj
 
-		self.posX = x
-		self.posY = y
-		
-		# prev position is used for the input queue to prevent self collision
-		self.prevPos = {'x':x, 'y':y}
-		self.alive = True
-		
-		# list of directions inputs to be executed in subsequent frames
-		self.directionQ = []
-		self.maxDirectionQLen = 3
-		
-		# where to go when we draw the next frame
-		self.direction = initialDirection
+    def __init__(self, gameObj, color, ID, x, y, direction):
+        self.color = color
+        self.ID = ID
+        self.gameObj = gameObj
+        self.x = x
+        self.y = y
+        self.direction = direction
 
-		gameObj.board.grid[y][x] = playerid
-	
-	#direction definitions
-	UP = 0
-	RIGHT = 1
-	DOWN = 2
-	LEFT = 3
+        self.prevPos = (x, y)
+        self.alive = True
 
-	def movePlayer(self):
-		# move the player (change position) and update the game board
-		if self.direction == Player.UP:
-			self.game.board.grid[self.posY-1][self.posX] = self.playerid
-			self.posY = self.posY - 1
-		elif self.direction == Player.RIGHT:
-			self.game.board.grid[self.posY][self.posX+1] = self.playerid
-			self.posX = self.posX + 1
-		elif self.direction == Player.DOWN:
-			self.game.board.grid[self.posY+1][self.posX] = self.playerid
-			self.posY = self.posY + 1
-		elif self.direction == Player.LEFT:
-			self.game.board.grid[self.posY][self.posX-1] = self.playerid
-			self.posX = self.posX - 1
+        self.directionQueue = []
 
-	def checkForCollision(self, direction):
-		if self.wouldCollide(direction) == True:
-			self.alive = False
+        self.gameObj.board.grid[y][x] = ID
 
-	def wouldCollideSelf(self, nextDirection):
-		'''Check if the player would collide with their previous position going a particular direction'''
-		return (nextDirection == Player.UP and self.posY-1 == self.prevPos['y']) or \
-			(nextDirection == Player.RIGHT and self.posX+1 == self.prevPos['x']) or \
-			(nextDirection == Player.DOWN and self.posY+1 == self.prevPos['y']) or \
-			(nextDirection == Player.LEFT and self.posX-1 == self.prevPos['x'])
+    # Constants for directions of the player
+    UP = 0
+    RIGHT = 1
+    DOWN = 2
+    LEFT = 3
 
-	def wouldCollide(self, direction):
-		'''check if a player would collide with an obstacle if they move in a particular direction'''
-		return (direction == Player.UP and self.game.board.isObstacle(self.posX, self.posY-1)) or \
-			(direction == Player.RIGHT and self.game.board.isObstacle(self.posX+1, self.posY)) or \
-			(direction == Player.DOWN and self.game.board.isObstacle(self.posX, self.posY+1)) or \
-			(direction == Player.LEFT and self.game.board.isObstacle(self.posX-1, self.posY))
+    def movePlayer(self):
+        # move player and re-draw GameBoard object
+        self.prevPos = (self.x, self.y)
 
-	def directionToNextLocation(self, posX, posY, direction):
-		'''converts current position and direction to the next position'''
-		if direction == Player.UP: return (posX, posY-1)
-		if direction == Player.RIGHT: return (posX+1, posY)
-		if direction == Player.DOWN: return (posX, posY+1)
-		if direction == Player.LEFT: return (posX-1, posY)
+        match self.direction:
+            case self.UP:
+                self.gameObj.board.grid[self.y - 1][self.x] = self.ID
+                self.y = self.y - 1
+            case self.RIGHT:
 
-	def calculateDirectionTerritory(self, direction, opponentDirection):
-		''' Given a directions, calculate a player's predicted territory,
-			the number of positions he can reach before all other player.
-			assumption: the next location based on direction and current 
-				position is open for each player'''
-		nplayers = len(self.game.players)
-		
-		# array of the total territory that a player controls, player 1 is index 0
-		playerTerritory = [0]*nplayers
-		qs = [[] for x in range(nplayers)] # 1 queue for the bfs search for each player
+                self.gameObj.board.grid[self.y][self.x + 1] = self.ID
 
-		# insert into queue the start location for the current player
-		start = self.directionToNextLocation(self.posX, self.posY, direction)
-		# the queue is an array of tuples: ((posx, posy), depth)
-		qs[self.playerid-1].append((start, 0)) 
-		
-		#global hashmap of viewed locations. Updated once per bfs layer depth
-		seenLocations = {start:self.playerid}
-		
-		# insert into queue the start location for the opponents
-		for playerid in set(self.game.players)-set([self.playerid]):
-			start = self.directionToNextLocation(self.game.players[playerid].posX, 
-													self.game.players[playerid].posY, 
-													opponentDirection)
-			qs[playerid-1].append((start, 0))
-		
-		# start bfs here
-		depth = 0
-		while sum(map(len, qs)): #while we still have an element in any queue
-			seenThisLayer = {}
+                self.x = self.x + 1
+            case self.DOWN:
+                self.gameObj.board.grid[self.y + 1][self.x] = self.ID
+                self.y = self.y + 1
+            case self.LEFT:
+                self.gameObj.board.grid[self.y][self.x - 1] = self.ID
+                self.x = self.x - 1
 
-			for player in range(nplayers):
-				seenThisPlayerLayer = {}
+    def isInvalidDirection(self, nextDirection):
+        return (nextDirection == Player.UP and self.direction == Player.DOWN) or \
+               (nextDirection == Player.DOWN and self.direction == Player.UP) or \
+               (nextDirection == Player.LEFT and self.direction == Player.RIGHT) or \
+               (nextDirection == Player.RIGHT and self.direction == Player.LEFT)
 
-				#loop guard: advance only one bfs layer for each player
-				while qs[player] and qs[player][0][1] <= depth:
-					a = qs[player].pop(0)
-					curloc = a[0]
+    def isCollision(self, direction):
+        return (direction == Player.UP and self.gameObj.board.isObstacle(self.x, self.y - 1)) or \
+            (direction == Player.RIGHT and self.gameObj.board.isObstacle(self.x + 1, self.y)) or \
+            (direction == Player.DOWN and self.gameObj.board.isObstacle(self.x, self.y + 1)) or \
+            (direction == Player.LEFT and self.gameObj.board.isObstacle(
+                self.x - 1, self.y))
 
-					if curloc not in seenThisLayer:
-						seenThisLayer[curloc] = player # this player owns this location
-					else:
-						seenThisLayer[curloc] = -1 # already seen this layer, there has be a tie (marked by -1)
-					
-					# add adjacent open locations to the player's bfs queue
-					for dir in range(0,4):
-						loc = self.directionToNextLocation(curloc[0], curloc[1], dir)
-						if loc not in seenLocations and loc not in seenThisPlayerLayer \
-						and not self.game.board.isObstacle(loc[0], loc[1]):
-							seenThisPlayerLayer[loc] = 1
-							
-							# a[1]+1: increase the depth by one for the added locations
-							qs[player].append((loc, a[1]+1)) 
+    def checkCollision(self, direction):
+        if self.isCollision(direction):
+            self.alive = False  # kill player
 
-			#count territory and update the global seenLocations
-			for loc in seenThisLayer:
-				player = seenThisLayer[loc]
-				seenLocations[loc] = player
+    def convertDirectionToLocation(self, direction):
+        match direction:
+            case self.UP:
+                return (self.x, self.y - 1)
+            case self.RIGHT:
+                return (self.x + 1, self.y)
+            case self.DOWN:
+                return (self.x, self.y + 1)
+            case self.LEFT:
+                return (self.x - 1, self.y)
 
-				if player >= 0: #not a tie
-					playerTerritory[player] += 1
+    def tick(self):
+        pass
 
-			depth += 1
-		
-		# debug visualisation for bfs. Drawing logic is in GameBoard.py
-		# self.game.board.clearDebugBoard()
-		# for loc in seenLocations: self.game.board.debugBoard[loc[1]][loc[0]] = seenLocations[loc]+1
+    def event(self, event):
+        pass
 
-		return playerTerritory[self.playerid-1]
 
-	# place holders for child classes
-	def tick(self):
-		pass
+class Bot(Player):
+    def __init__(self, gameObj, color, ID, x, y, direction):
+        super().__init__(gameObj, color, ID, x, y, direction)
+        self.max_depth = 5  # Adjust this to control look-ahead depth
 
-	def event(self, event):
-		pass
+    def tick(self):
+        best_move = self.decision()
+        if best_move is not None:
+            self.direction = best_move
 
+    def decision(self):
+        best_value = float('-inf')
+        best_move = None
+        alpha = float('-inf')
+        beta = float('inf')
+
+        # Get possible moves
+        valid_moves = self.get_valid_moves()
+
+        # If no valid moves, return current direction
+        if not valid_moves:
+            return self.direction
+
+        # Try each possible move
+        for move in valid_moves:
+            # Create a copy of current state
+            next_pos = self.convertDirectionToLocation(move)
+
+            # Skip if move leads to immediate collision
+            if self.isCollision(move):
+                continue
+
+            # Simulate move
+            value = self.min_value(
+                next_pos, self.get_opponent_position(), 1, alpha, beta)
+
+            if best_value < value:
+                best_move = move
+                best_value = value
+
+            alpha = max(alpha, best_value)
+
+        return best_move
+
+    def min_value(self, my_pos, opp_pos, depth, alpha, beta):
+        if depth >= self.max_depth or self.is_terminal_state(my_pos, opp_pos):
+            return self.evaluate_state(my_pos, opp_pos)
+
+        value = float('inf')
+        op_moves = self.get_valid_moves_for_position(opp_pos)
+
+        for op_move in op_moves:
+            next_op_pos = self.get_next_position(opp_pos, op_move)
+
+            if self.is_position_blocked(next_op_pos):
+                continue
+
+            cur_value = self.max_value(
+                my_pos, next_op_pos, depth + 1, alpha, beta)
+            value = min(value, cur_value)
+
+            if value <= alpha:
+                return value
+            beta = min(beta, value)
+
+        return value
+
+    def max_value(self, my_pos, op_pos, depth, alpha, beta):
+        if depth >= self.max_depth or self.is_terminal_state(my_pos, op_pos):
+            return self.evaluate_state(my_pos, op_pos)
+
+        value = float('-inf')
+
+        my_moves = self.get_valid_moves_for_position(my_pos)
+
+        for my_move in my_moves:
+            next_my_pos = self.get_next_position(my_pos, my_move)
+
+            if self.is_position_blocked(next_my_pos):
+                continue
+
+            curr_value = self.min_value(
+                next_my_pos, op_pos, depth + 1, alpha, beta)
+            value = max(value, curr_value)
+
+            if value >= beta:
+                return value
+            alpha = max(alpha, value)
+
+        return value
+
+    def get_valid_moves(self):
+        valid_moves = []
+        for direction in [Player.UP, Player.RIGHT, Player.DOWN, Player.LEFT]:
+            if not self.isInvalidDirection(direction) and not self.isCollision(direction):
+                valid_moves.append(direction)
+        return valid_moves
+
+    def get_valid_moves_for_position(self, pos):
+        valid_moves = []
+        for direction in [Player.UP, Player.RIGHT, Player.DOWN, Player.LEFT]:
+            next_pos = self.get_next_position(pos, direction)
+            if not self.is_position_blocked(next_pos):
+                valid_moves.append(direction)
+        return valid_moves
+
+    def get_next_position(self, pos, direction):
+        x, y = pos
+        if direction == Player.UP:
+            return (x, y - 1)
+        elif direction == Player.DOWN:
+            return (x, y + 1)
+        elif direction == Player.LEFT:
+            return (x - 1, y)
+        else:  # RIGHT
+            return (x + 1, y)
+
+    def is_position_blocked(self, pos):
+        x, y = pos
+        return self.gameObj.board.isObstacle(x, y)
+
+    def get_opponent_position(self):
+        opponent_id = 2 if self.ID == 1 else 1
+        opponent = self.gameObj.players[opponent_id]
+        return (opponent.x, opponent.y)
+
+    def is_terminal_state(self, my_pos, op_pos):
+        if self.is_position_blocked(my_pos) or self.is_position_blocked(op_pos):
+            return True
+
+        my_moves = self.get_valid_moves_for_position(my_pos)
+        op_moves = self.get_valid_moves_for_position(op_pos)
+
+        return len(my_moves) == 0 or len(op_moves) == 0
+
+    def evaluate_state(self, my_pos, op_pos):
+        my_moves = len(self.get_valid_moves_for_position(my_pos))
+        op_moves = len(self.get_valid_moves_for_position(op_pos))
+
+        if op_moves == 0:
+            return float('inf')   # We won
+        if my_moves == 0:
+            return float('-inf')  # We lost
+
+        # Calculate available space using flood fill
+        op_space = self.flood_fill_count(op_pos)
+        my_space = self.flood_fill_count(my_pos)
+
+        return (my_moves * 10 + my_space) - (op_moves * 10 + op_space)
+
+    def flood_fill_count(self, start_pos):
+        visited = set()
+        stack = [start_pos]
+
+        while stack:
+            pos = stack.pop()
+            if pos not in visited and not self.is_position_blocked(pos):
+                visited.add(pos)
+                x, y = pos
+                stack.extend([
+                    (x - 1, y),
+                    (x + 1, y),
+                    (x, y - 1),
+                    (x, y + 1)
+                ])
+
+        return len(visited)
 
 
 class Human(Player):
-	def __init__(self, gameObj, color, playerid, x, y, initialDirection, controls):
-		super(Human, self).__init__(gameObj, color, playerid, x, y, initialDirection)
+    def __init__(self, gameObj, color, ID, x, y, direction, keybinds):
+      super().__init__(gameObj, color, ID, x, y, direction)
 
-		#controls is a 4-tuple, up, right, down, left
-		self.ctl_up = controls[0]
-		self.ctl_right = controls[1]
-		self.ctl_down = controls[2]
-		self.ctl_left = controls[3]
+      self.p_up = keybinds[0]
+      self.p_left = keybinds[1]
+      self.p_down = keybinds[2]
+      self.p_right = keybinds[3]
 
-	def event(self, event):
-		if event.type == pygame.KEYDOWN and len(self.directionQ) < self.maxDirectionQLen:
-			if event.key == self.ctl_up:
-				self.directionQ.append(Player.UP)
-			elif event.key == self.ctl_right:
-				self.directionQ.append(Player.RIGHT)
-			elif event.key == self.ctl_down:
-				self.directionQ.append(Player.DOWN)
-			elif event.key == self.ctl_left:
-				self.directionQ.append(Player.LEFT)
+  def tick(self):
+      while self.directionQueue:
 
-	def tick(self): #perform moving and collision calculations here
+          if self.isInvalidDirection(self.directionQueue[0]) or self.directionQueue[0] == self.direction:
 
-		while self.directionQ and self.wouldCollideSelf(self.directionQ[0]):
-			self.directionQ.pop(0)
-		if self.directionQ:
-			self.direction = self.directionQ.pop(0)
-		while self.directionQ and self.directionQ[0] == self.direction:
-			self.directionQ.pop(0)
+              self.directionQueue.pop(0)
+          else:
+              self.direction = self.directionQueue.pop(0)
 
-		self.prevPos['x'] = self.posX
-		self.prevPos['y'] = self.posY
+          self.prevPos = (self.x, self.y)  # why do we need this again?
 
+  def event(self, event):
+      if event.type == pygame.KEYDOWN:
+          if event.key == self.p_up:
+              self.directionQueue.append(Player.UP)
+          elif event.key == self.p_left:
+              self.directionQueue.append(Player.LEFT)
+          elif event.key == self.p_down:
+              self.directionQueue.append(Player.DOWN)
+          elif event.key == self.p_right:
+              self.directionQueue.append(Player.RIGHT)
 
-class Computer(Player):
-	def __init__(self, gameObj, color, playerid, x, y, initialDirection):
-		super(Computer, self).__init__(gameObj, color, playerid, x, y, initialDirection)
-
-	def tick(self):
-		'''select next direction'''
-		self.strategyRandom()
-
-	def strategyRandom(self):
-		dir = list(range(0, 4))
-		
-		# 10% chance of changing directions
-		if random.randint(1, 10) == 1:
-			self.direction = dir[random.randint(0, len(dir)-1)]
-		
-		# if we would collide, pick a new random direction
-		while dir and self.wouldCollide(self.direction):
-			self.direction = dir.pop(random.randint(0, len(dir)-1))
-
-class GenComputer(Computer):
-	def __init__(self, gameObj, color, playerid, x, y, initialDirection, genome):
-		super(GenComputer, self).__init__(gameObj, color, playerid, x, y, initialDirection)
+              
+class GenComputer(Player):
+	def __init__(self, gameObj, color, ID, x, y, direction, genome):
+		super(GenComputer, self).__init__(gameObj, color, ID, x, y, direction)
 		self.genome = genome
 
 	def tick(self):
 		self.strategyGenetic()
 
 	def distanceToSelf(self, direction):
-		next_x, next_y = self.directionToNextLocation(self.posX, self.posY, direction)
+		next_x, next_y = self.convertDirectionToLocation(direction)
 
 		min_distance = float('inf')
 
@@ -222,10 +302,10 @@ class GenComputer(Computer):
 		return min_distance
 	
 	def predictTrap(self, direction):
-		next_x, next_y = self.directionToNextLocation(self.posX, self.posY, direction)
+		next_x, next_y = self.convertDirectionToLocation(direction)
 
 		temp_board = self.game.board.copy()
-		temp_board.grid[next_y][next_x] = self.playerid
+		temp_board.grid[next_y][next_x] = self.ID
 
 		reachable_area = self.calculateReachableArea(next_x, next_y, temp_board)
 
@@ -261,7 +341,7 @@ class GenComputer(Computer):
 	def strategyGenetic(self):
 		max_score = -float('inf')
 		best_direction = None
-		opponentId = (set(self.game.players) - {self.playerid}).pop()
+		opponentId = (set(self.game.players) - {self.ID}).pop()
 
 		for direction in range(4):
 			if self.wouldCollide(direction):

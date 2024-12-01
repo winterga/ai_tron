@@ -19,27 +19,33 @@ class Match:
 
         # check for any other collision situations and update positions
         for player in self.gameObj.players:
-            self.gameObj.players[player].checkForCollision(self.gameObj.players[player].direction)
+
+            self.gameObj.players[player].checkCollision(self.gameObj.players[player].direction)
+
             self.gameObj.players[player].movePlayer()
-        
+            
         # check if anyone is dead
         self.checkStatus(False)
 
         # render the screen
         if self.active:
-            self.gameObj.screen.fill((0,0,0))
+            self.gameObj.screen.fill((0, 0, 0))
             self.gameObj.board.drawGrid()
 
     def event(self, event):
         for player in self.gameObj.players:
             self.gameObj.players[player].event(event)
-    
+
     def checkTie(self):
         nextPositions = []
         for player in self.gameObj.players:
-            nextPosition = self.gameObj.players[player].directionToNextLocation(self.gameObj.players[player].posX,self.gameObj.players[player].posY,self.gameObj.players[player].direction)
+
+            nextPosition = self.gameObj.players[player].convertDirectionToLocation(
+                self.gameObj.players[player].direction)
+
             if nextPosition in nextPositions:
-                self.gameObj.board.drawTieSquare(nextPosition[0], nextPosition[1])
+                self.gameObj.board.drawTieSquare(
+                    nextPosition[0], nextPosition[1])
                 return True
             else:
                 nextPositions.append(nextPosition)
@@ -76,19 +82,19 @@ class Match:
             elif self.gameMode == 9:
                 self.gameObj.ABVNN_Tie += 1
 
-            self.gameObj.gameOverMenu = GameOverMenu(self.gameObj, "Nobody", self.gameMode)
+            self.gameObj.gameOverMenu = GameOverMenu(
+                self.gameObj, "Nobody", self.gameMode)
             self.gameObj.switchToMenu("GAME_OVER")
         # if one is dead
         elif aliveCount == 1:
             self.active = False
             print("Single player alive. Ending match.")
-            
             winner = ""
             for player in self.gameObj.players:
                 if self.gameObj.players[player].alive:
                     winner = player
                     break
-            
+
             if self.gameMode == 1:
                 if winner == 1:
                     self.gameObj.PVE_PlayerWins += 1
@@ -135,5 +141,6 @@ class Match:
                 elif winner == 2:
                     self.gameObj.ABVNN_NNWins += 1
 
-            self.gameObj.gameOverMenu = GameOverMenu(self.gameObj, "Player " + str(winner), self.gameMode)
+            self.gameObj.gameOverMenu = GameOverMenu(
+                self.gameObj, "Player " + str(winner), self.gameMode)
             self.gameObj.switchToMenu("GAME_OVER")
