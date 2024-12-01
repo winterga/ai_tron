@@ -72,8 +72,7 @@ class Tron:
         self.ABVNN_NNWins = 0
         self.ABVNN_Tie = 0
 
-        self.best_genome = [0.42430839081823557,
-                            0.6795954452427644, 0.8502043539767576]
+        self.best_genome = [0.42430839081823557, 0.6795954452427644]
         self.num_tourney_rounds = 10
 
         self.statsScreen = StatsScreen(self)
@@ -287,7 +286,7 @@ class Tron:
                 clock.tick(100)
 
     def start_training(self, tron):
-        initial_population = [[random.random() for _ in range(3)]
+        initial_population = [[random.random() for _ in range(2)]
                               for _ in range(20)]
         print("Starting genetic algorithm training...")
 
