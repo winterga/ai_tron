@@ -6,7 +6,7 @@ class MainMenu:
 
 		self.font = pygame.font.SysFont('swmono', 34)
 
-		self.menuList = ['Player vs Player', 'Player vs AI', 'Train AI w Genetic Algorithm', 'Tournament' , 'Stats']
+		self.menuList = ['Player vs Player', 'Player vs AI', 'Train AI w Genetic Algorithm', 'Player vs DeepQ', 'Tournament', 'Stats']
 		print(enumerate(self.menuList))
 		self.items = [] #text objects, a list of lists: [text, bitmap, (width, height), (posx, posy)]
 		self.activeItem = 0

@@ -1,5 +1,6 @@
 import pygame
 import random
+import heapq
 
 
 class Player:
@@ -16,6 +17,8 @@ class Player:
         self.alive = True
 
         self.directionQueue = []
+        self.timeAlive = 0
+		
 
         self.gameObj.board.grid[y][x] = ID
 
@@ -44,7 +47,7 @@ class Player:
             case self.LEFT:
                 self.gameObj.board.grid[self.y][self.x - 1] = self.ID
                 self.x = self.x - 1
-
+                
     def isInvalidDirection(self, nextDirection):
         return (nextDirection == Player.UP and self.direction == Player.DOWN) or \
                (nextDirection == Player.DOWN and self.direction == Player.UP) or \
@@ -72,6 +75,91 @@ class Player:
                 return (self.x, self.y + 1)
             case self.LEFT:
                 return (self.x - 1, self.y)
+            
+    def wouldCollideSelf(self, nextDirection):
+        '''Check if the player would collide with their previous position going a particular direction'''
+        return (nextDirection == Player.UP and self.posY-1 == self.prevPos['y']) or \
+			(nextDirection == Player.RIGHT and self.posX+1 == self.prevPos['x']) or \
+			(nextDirection == Player.DOWN and self.posY+1 == self.prevPos['y']) or \
+			(nextDirection == Player.LEFT and self.posX-1 == self.prevPos['x'])
+
+    def isCollision(self, direction):
+        return (direction == Player.UP and self.gameObj.board.isObstacle(self.x, self.y - 1)) or \
+            (direction == Player.RIGHT and self.gameObj.board.isObstacle(self.x + 1, self.y)) or \
+            (direction == Player.DOWN and self.gameObj.board.isObstacle(self.x, self.y + 1)) or \
+            (direction == Player.LEFT and self.gameObj.board.isObstacle(
+                self.x - 1, self.y))
+            
+    def checkCollision(self, direction):
+        if self.isCollision(direction):
+            self.alive = False # kill player
+
+    def convertDirectionToLocation(self, x, y, direction):
+        match direction:
+            case self.UP:
+                return (x, y - 1)
+            case self.RIGHT:
+                return (x + 1, y)
+            case self.DOWN:
+                return (x, y + 1)
+            case self.LEFT:
+                return (x - 1, y)
+            
+    def calculateDirectionTerritory(self, direction, opponentDirection):
+        
+        nplayers = len(self.gameObj.players)
+        
+        playerTerritory = [0] * nplayers
+        qs = [[] for x in range(nplayers)] # 1 queue for bfs search for each player
+        
+        start = self.convertDirectionToLocation(self.x, self.y, direction)
+        
+        qs[self.ID-1].append((start, 0))
+        
+        seenLocations = {start: self.ID}
+        
+        for playerID in set(self.gameObj.players)-set([self.ID]):
+            start = self.convertDirectionToLocation(self.gameObj.players[playerID].x, self.gameObj.players[playerID].y, opponentDirection)
+            qs[playerID-1].append((start, 0))
+            
+            
+        # start bfs
+        depth = 0
+        while sum(map(len, qs)): # while there are still locations to explore
+            seenThisLayer = {}
+            for playerID in range(nplayers):
+                seenThisPlayerLayer = {}
+                
+                while qs[playerID] and qs[playerID][0][1] <= depth:
+                    a = qs[playerID].pop(0)
+                    curloc = a[0]
+                    
+                    if curloc not in seenThisLayer:
+                        seenThisLayer[curloc] = playerID
+                    else:
+                        seenThisLayer[curloc] = -1
+                        
+                    for dir in range(0,4):
+                        loc = self.convertDirectionToLocation(curloc[0], curloc[1], dir)
+                        if loc not in seenLocations and loc not in seenThisPlayerLayer and not self.gameObj.board.isObstacle(loc[0], loc[1]):
+                            seenThisPlayerLayer[loc] = 1
+                            qs[playerID].append((loc, a[1]+1))
+                            
+            for loc in seenThisLayer:
+                player = seenThisLayer[loc]
+                seenLocations[loc] = player
+                
+                if player >= 0:
+                    playerTerritory[player] += 1
+            
+            depth += 1
+            
+            
+        return playerTerritory[self.ID-1]
+			
+        
+    def distanceToClosestWall(self, x, y):
+        return min(x, y, self.gameObj.board.xTiles - x, self.gameObj.board.yTiles - y)
 
     def tick(self):
         pass
@@ -79,8 +167,78 @@ class Player:
     def event(self, event):
         pass
 
+# ----- from DeepQ Merge -----
 
-class Bot(Player):
+# class Bot(Player):
+# 	def __init__(self, gameObj, color, playerid, x, y, initialDirection, deepQModel=None):
+# 		super(Bot, self).__init__(gameObj, color, playerid, x, y, initialDirection)
+# 		self.deepQModel = deepQModel
+
+# 	def deepQStrategy(self, gameState):
+# 		state = self.game.getEnvState()
+# 		if gameState == 'TRAINING':
+# 			self.direction = self.deepQModel.act(state, self.playerid)
+# 			# print(self.direction)
+# 		else:
+# 			print("Predicting direction")
+# 			valid_actions = [
+#             action for action in range(4) 
+#             if not self.game.players[self.playerid].wouldCollide(action)
+#         	]
+# 			print(valid_actions)
+# 			self.direction = self.deepQModel.predict(state, valid_actions)
+			
+# 			print("Predicted direction: ", self.direction)
+    
+# 	def tick(self, gameState):
+#         # print("Bot tick")
+#         # print(self.ID)
+# 		if self.deepQModel is None:
+#             # print("No model provided for DeepQStrategy... using most territory strategy")
+# 			self.strategyMostTerritory()
+# 			# self.strategyRandom()
+# 		else:
+# 			self.deepQStrategy(gameState)
+            
+#         ## Put other strategies here
+
+
+# 	def strategyRandom(self):
+# 		dir = list(range(0, 4))
+		
+# 		# 10% chance of changing directions
+# 		if random.randint(1, 10) == 1:
+# 			self.direction = dir[random.randint(0, len(dir)-1)]
+		
+# 		# if we would collide, pick a new random direction
+# 		while dir and self.wouldCollide(self.direction):
+# 			self.direction = dir.pop(random.randint(0, len(dir)-1))
+
+
+
+# 	def strategyMostTerritory(self):
+# 		maxArea = 0
+# 		bestDirection = 0
+
+# 		opponentId = (set(self.game.players)-set([self.playerid])).pop()
+		
+# 		for direction in range(0,4):
+# 			if self.wouldCollide(direction): continue
+
+# 			#generate random direction for opponent (assumes only 2 players)
+# 			a = list(range(0,4))
+# 			opdir = a.pop(random.randint(0, 3))
+# 			while a and self.game.players[opponentId].wouldCollide(opdir):
+# 				opdir = a.pop(random.randint(0, len(a)-1))
+
+# 			area = self.calculateDirectionTerritory(direction, opdir)
+# 			if area > maxArea:
+# 				bestDirection = direction
+# 				maxArea = area
+
+# 		self.direction = bestDirection
+
+class PruneComputer(Player):
     def __init__(self, gameObj, color, ID, x, y, direction):
         super().__init__(gameObj, color, ID, x, y, direction)
         self.max_depth = 5  # Adjust this to control look-ahead depth
@@ -248,7 +406,6 @@ class Bot(Player):
 
         return len(visited)
 
-
 class Human(Player):
     def __init__(self, gameObj, color, ID, x, y, direction, keybinds):
         super().__init__(gameObj, color, ID, x, y, direction)
@@ -278,7 +435,7 @@ class Human(Player):
             elif event.key == self.p_right:
                 self.directionQueue.append(Player.RIGHT)
 
-              
+
 class GenComputer(Player):
     def __init__(self, gameObj, color, ID, x, y, direction, genome):
         super(GenComputer, self).__init__(gameObj, color, ID, x, y, direction)
@@ -298,14 +455,15 @@ class GenComputer(Player):
             min_distance = min(min_distance, distance)
 
         return min_distance
-    
+
     def predictTrap(self, direction):
         next_x, next_y = self.convertDirectionToLocation(direction)
 
         temp_board = self.gameObj.board.copy()
         temp_board.grid[next_y][next_x] = self.ID
 
-        reachable_area = self.calculateReachableArea(next_x, next_y, temp_board)
+        reachable_area = self.calculateReachableArea(
+            next_x, next_y, temp_board)
 
         trap_threshold = 30
 
@@ -344,7 +502,7 @@ class GenComputer(Player):
         for direction in range(4):
             if self.isCollision(direction):
                 continue
-                
+
             if self.predictTrap(direction):
                 continue
 
@@ -377,3 +535,495 @@ class GenComputer(Player):
             best_direction = self.direction
 
         self.direction = best_direction
+
+
+class aStarComputer(Player):
+    def __init__(self, gameObj, color, ID, x, y, direction):
+        super().__init__(gameObj, color, ID, x, y, direction)
+        self.max_depth = 5  # Adjust this to control look-ahead depth
+
+    def deepQStrategy(self):
+        return random.choice([Player.UP, Player.RIGHT, Player.DOWN, Player.LEFT])
+
+    def tick(self):
+        best_move = self.decision()
+        if best_move is not None:
+            self.direction = best_move
+
+    def decision(self):
+        best_value = float('-inf')
+        best_move = None
+        alpha = float('-inf')
+        beta = float('inf')
+
+        # Get possible moves
+        valid_moves = self.get_valid_moves()
+
+        # If no valid moves, return current direction
+        if not valid_moves:
+            return self.direction
+
+        # Try each possible move
+        for move in valid_moves:
+            # Create a copy of current state
+            next_pos = self.convertDirectionToLocation(move)
+
+            # Skip if move leads to immediate collision
+            if self.isCollision(move):
+                continue
+
+            # Simulate move
+            value = self.min_value(
+                next_pos, self.get_opponent_position(), 1, alpha, beta)
+
+            if best_value < value:
+                best_move = move
+                best_value = value
+
+            alpha = max(alpha, best_value)
+
+        return best_move
+
+    def min_value(self, my_pos, opp_pos, depth, alpha, beta):
+        if depth >= self.max_depth or self.is_terminal_state(my_pos, opp_pos):
+            return self.evaluate_state(my_pos, opp_pos)
+
+        value = float('inf')
+        op_moves = self.get_valid_moves_for_position(opp_pos)
+
+        for op_move in op_moves:
+            next_op_pos = self.get_next_position(opp_pos, op_move)
+
+            if self.is_position_blocked(next_op_pos):
+                continue
+
+            cur_value = self.max_value(
+                my_pos, next_op_pos, depth + 1, alpha, beta)
+            value = min(value, cur_value)
+
+            if value <= alpha:
+                return value
+            beta = min(beta, value)
+
+        return value
+
+    def max_value(self, my_pos, op_pos, depth, alpha, beta):
+        if depth >= self.max_depth or self.is_terminal_state(my_pos, op_pos):
+            return self.evaluate_state(my_pos, op_pos)
+
+        value = float('-inf')
+
+        my_moves = self.get_valid_moves_for_position(my_pos)
+
+        for my_move in my_moves:
+            next_my_pos = self.get_next_position(my_pos, my_move)
+
+            if self.is_position_blocked(next_my_pos):
+                continue
+
+            curr_value = self.min_value(
+                next_my_pos, op_pos, depth + 1, alpha, beta)
+            value = max(value, curr_value)
+
+            if value >= beta:
+                return value
+            alpha = max(alpha, value)
+        self.strategyAStar()
+
+        return value
+
+    def get_valid_moves(self):
+        valid_moves = []
+        for direction in [Player.UP, Player.RIGHT, Player.DOWN, Player.LEFT]:
+            if not self.isInvalidDirection(direction) and not self.isCollision(direction):
+                valid_moves.append(direction)
+        return valid_moves
+
+    def event(self, event):
+        pass
+
+    def get_valid_moves_for_position(self, pos):
+        valid_moves = []
+        for direction in [Player.UP, Player.RIGHT, Player.DOWN, Player.LEFT]:
+            next_pos = self.get_next_position(pos, direction)
+            if not self.is_position_blocked(next_pos):
+                valid_moves.append(direction)
+        return valid_moves
+
+    def isValidMove(self, x, y):
+        return (0 <= x < self.gameObj.board.xTiles and
+                0 <= y < self.gameObj.board.yTiles and
+                not self.gameObj.board.isObstacle(x, y))
+
+    def directionToNextLocation(self, x, y, d):
+        match d:
+            case self.UP:
+                return x, y-1
+            case self.DOWN:
+                return x, y+1
+            case self.LEFT:
+                return x-1, y
+            case self.RIGHT:
+                return x+1, y
+
+    def get_next_position(self, pos, direction):
+        x, y = pos
+        if direction == Player.UP:
+            return (x, y - 1)
+        elif direction == Player.DOWN:
+            return (x, y + 1)
+        elif direction == Player.LEFT:
+            return (x - 1, y)
+        else:  # RIGHT
+            return (x + 1, y)
+
+    def is_position_blocked(self, pos):
+
+        x, y = pos
+        return self.gameObj.board.isObstacle(x, y)
+
+    def get_opponent_position(self):
+        opponent_id = 2 if self.ID == 1 else 1
+        opponent = self.gameObj.players[opponent_id]
+        return (opponent.x, opponent.y)
+
+    def is_terminal_state(self, my_pos, op_pos):
+        if self.is_position_blocked(my_pos) or self.is_position_blocked(op_pos):
+            return True
+
+        my_moves = self.get_valid_moves_for_position(my_pos)
+        op_moves = self.get_valid_moves_for_position(op_pos)
+
+        return len(my_moves) == 0 or len(op_moves) == 0
+
+    def evaluate_state(self, my_pos, op_pos):
+        my_moves = len(self.get_valid_moves_for_position(my_pos))
+        op_moves = len(self.get_valid_moves_for_position(op_pos))
+
+        if op_moves == 0:
+            return float('inf')   # We won
+        if my_moves == 0:
+            return float('-inf')  # We lost
+
+        # Calculate available space using flood fill
+        op_space = self.flood_fill_count(op_pos)
+        my_space = self.flood_fill_count(my_pos)
+        return (my_moves * 10 + my_space) - (op_moves * 10 + op_space)
+
+    def flood_fill_count(self, start_pos):
+        visited = set()
+        stack = [start_pos]
+
+        while stack:
+            pos = stack.pop()
+            if pos not in visited and not self.is_position_blocked(pos):
+                visited.add(pos)
+                x, y = pos
+                stack.extend([
+                    (x - 1, y),
+                    (x + 1, y),
+                    (x, y - 1),
+                    (x, y + 1)
+                ])
+
+        return len(visited)
+
+    # Ok the function name and definition were separate in the PR so idk if that was for debugging or not. I just put them together to get the tournament to work.
+    def neighbors(self, pos):
+        for direction in range(4):
+            nX, nY = self.directionToNextLocation(nX, nY, direction)
+            if self.isValidMove(nX, nY):
+                print(f"Neighbor: {(nX, nY)}, Direction: {direction}")
+                yield nX, nY, direction
+
+    def heuristic(self, x, y):
+        target = self.findLargestSafeArea()
+        return abs(target[0] - x) + abs(target[1] - y)
+
+    def strategyAStar(self):
+        print("Starting A*")
+        open_set = []
+        start = (self.x, self.y)
+        # (priority, cost, position, direction)
+        heapq.heappush(open_set, (0, 0, start, None))
+        came_from = {}
+        cost_so_far = {start: 0}
+        goal = None
+
+        while open_set:
+            _, current_cost, current, current_dir = heapq.heappop(open_set)
+            print(f"Current: {current}, Cost: {current_cost}")
+
+            if self.isSafeGoal(current):
+                goal = current
+                print(f"Goal found: {goal}")
+                break
+
+            for nX, nY, direction in self.neighbors(current):
+                next_pos = (nX, nY)
+                new_cost = current_cost + 1
+
+                if next_pos not in cost_so_far or new_cost < cost_so_far[next_pos]:
+                    cost_so_far[next_pos] = new_cost
+                    priority = new_cost + self.heuristic(nX, nY)
+                    heapq.heappush(
+                        open_set, (priority, new_cost, next_pos, direction))
+                    came_from[next_pos] = (current, direction)
+
+        if goal:
+            print(f"Path to goal found. Goal: {goal}")
+            current = goal
+            while came_from[current][0] != start:
+                current = came_from[current][0]
+            self.direction = came_from[current][1]
+            print(f"Next direction: {self.direction}")
+        else:
+            print("No path found")
+
+    def isSafeGoal(self, pos):
+        x, y = pos
+        result = self.isValidMove(x, y)
+        print(f"Checking if position {pos} is a safe goal: {result}")
+        return result
+
+    def findLargestSafeArea(self):
+        largest_area = None
+        largest_size = 0
+
+        for x in range(self.gameObj.board.xTiles):
+            for y in range(self.gameObj.board.yTiles):
+                if not self.gameObj.board.isObstacle(x, y):
+                    # Count adjacent free spaces
+                    size = sum([1 for nx, ny, _ in self.neighbors(
+                        (x, y)) if not self.gameObj.board.isObstacle(nx, ny)])
+                    if size > largest_size:
+                        largest_size = size
+                        largest_area = (x, y)
+
+        return largest_area if largest_area else (self.x, self.y)
+
+
+class Bot(Player):
+    def __init__(self, gameObj, color, ID, x, y, direction, deepQModel=None):
+        super().__init__(gameObj, color, ID, x, y, direction)
+        self.max_depth = 5  # Adjust this to control look-ahead depth
+        self.deepQModel = deepQModel
+        
+    def deepQStrategy(self, gameState):
+        state = self.gameObj.getEnvState()
+        if gameState == 'TRAINING':
+            self.direction = self.deepQModel.act(state, self.ID)
+        else:
+            print("Predicting direction")
+            valid_actions = [
+            action for action in range(4) 
+            if not self.gameObj.players[self.ID].isCollision(action)
+        	]
+            print(valid_actions)
+            self.direction = self.deepQModel.predict(state, valid_actions)
+            print("Predicted direction: ", self.direction)
+    
+    def strategyRandom(self):
+        dir = list(range(0, 4))
+        
+        # 10% chance of changing directions
+        if random.randint(1, 10) == 1:
+            self.direction = dir[random.randint(0, len(dir)-1)]
+            
+        # if we would collide, pick a new random direction
+        while dir and self.isCollision(self.direction):
+            self.direction = dir.pop(random.randint(0, len(dir)-1))
+            
+    
+    def strategyMostTerritory(self):
+        maxArea = 0
+        bestDirection = 0
+        
+        opponentId = (set(self.gameObj.players)-set([self.ID])).pop()
+
+        
+        for direction in range(0,4):
+            if self.isCollision(direction): continue
+            
+            #generate random direction for opponent (assumes only 2 players)
+            
+            a = list(range(0,4))
+            opdir = a.pop(random.randint(0, 3))
+            while a and self.gameObj.players[opponentId].isCollision(opdir):
+                opdir = a.pop(random.randint(0, len(a)-1))
+                
+            area = self.calculateDirectionTerritory(direction, opdir)
+            if area > maxArea:
+                bestDirection = direction
+                maxArea = area
+                
+        self.direction = bestDirection
+
+    def tick(self):
+        if self.deepQModel is None:
+            if self.gameObj.state == 'TRAINING':
+                self.strategyMostTerritory()
+            else:
+                best_move = self.decision()
+                if best_move is not None:
+                    self.direction = best_move
+        else:
+            self.deepQStrategy(self.gameObj.state)
+
+    def decision(self):
+        best_value = float('-inf')
+        best_move = None
+        alpha = float('-inf')
+        beta = float('inf')
+
+        # Get possible moves
+        valid_moves = self.get_valid_moves()
+
+        # If no valid moves, return current direction
+        if not valid_moves:
+            return self.direction
+
+        # Try each possible move
+        for move in valid_moves:
+            # Create a copy of current state
+            next_pos = self.convertDirectionToLocation(move)
+
+            # Skip if move leads to immediate collision
+            if self.isCollision(move):
+                continue
+
+            # Simulate move
+            value = self.min_value(
+                next_pos, self.get_opponent_position(), 1, alpha, beta)
+
+            if best_value < value:
+                best_move = move
+                best_value = value
+
+            alpha = max(alpha, best_value)
+
+        return best_move
+
+    def min_value(self, my_pos, opp_pos, depth, alpha, beta):
+        if depth >= self.max_depth or self.is_terminal_state(my_pos, opp_pos):
+            return self.evaluate_state(my_pos, opp_pos)
+
+        value = float('inf')
+        op_moves = self.get_valid_moves_for_position(opp_pos)
+
+        for op_move in op_moves:
+            next_op_pos = self.get_next_position(opp_pos, op_move)
+
+            if self.is_position_blocked(next_op_pos):
+                continue
+
+            cur_value = self.max_value(
+                my_pos, next_op_pos, depth + 1, alpha, beta)
+            value = min(value, cur_value)
+
+            if value <= alpha:
+                return value
+            beta = min(beta, value)
+
+        return value
+
+    def max_value(self, my_pos, op_pos, depth, alpha, beta):
+        if depth >= self.max_depth or self.is_terminal_state(my_pos, op_pos):
+            return self.evaluate_state(my_pos, op_pos)
+
+        value = float('-inf')
+
+        my_moves = self.get_valid_moves_for_position(my_pos)
+
+        for my_move in my_moves:
+            next_my_pos = self.get_next_position(my_pos, my_move)
+
+            if self.is_position_blocked(next_my_pos):
+                continue
+
+            curr_value = self.min_value(
+                next_my_pos, op_pos, depth + 1, alpha, beta)
+            value = max(value, curr_value)
+
+            if value >= beta:
+                return value
+            alpha = max(alpha, value)
+
+        return value
+
+    def get_valid_moves(self):
+        valid_moves = []
+        for direction in [Player.UP, Player.RIGHT, Player.DOWN, Player.LEFT]:
+            if not self.isInvalidDirection(direction) and not self.isCollision(direction):
+                valid_moves.append(direction)
+        return valid_moves
+
+    def get_valid_moves_for_position(self, pos):
+        valid_moves = []
+        for direction in [Player.UP, Player.RIGHT, Player.DOWN, Player.LEFT]:
+            next_pos = self.get_next_position(pos, direction)
+            if not self.is_position_blocked(next_pos):
+                valid_moves.append(direction)
+        return valid_moves
+
+    def get_next_position(self, pos, direction):
+        x, y = pos
+        if direction == Player.UP:
+            return (x, y - 1)
+        elif direction == Player.DOWN:
+            return (x, y + 1)
+        elif direction == Player.LEFT:
+            return (x - 1, y)
+        else:  # RIGHT
+            return (x + 1, y)
+
+    def is_position_blocked(self, pos):
+        x, y = pos
+        return self.gameObj.board.isObstacle(x, y)
+
+    def get_opponent_position(self):
+        opponent_id = 2 if self.ID == 1 else 1
+        opponent = self.gameObj.players[opponent_id]
+        return (opponent.x, opponent.y)
+
+    def is_terminal_state(self, my_pos, op_pos):
+        if self.is_position_blocked(my_pos) or self.is_position_blocked(op_pos):
+            return True
+
+        my_moves = self.get_valid_moves_for_position(my_pos)
+        op_moves = self.get_valid_moves_for_position(op_pos)
+
+        return len(my_moves) == 0 or len(op_moves) == 0
+
+    def evaluate_state(self, my_pos, op_pos):
+        my_moves = len(self.get_valid_moves_for_position(my_pos))
+        op_moves = len(self.get_valid_moves_for_position(op_pos))
+
+        if op_moves == 0:
+            return float('inf')   # We won
+        if my_moves == 0:
+            return float('-inf')  # We lost
+
+        # Calculate available space using flood fill
+        op_space = self.flood_fill_count(op_pos)
+        my_space = self.flood_fill_count(my_pos)
+
+        return (my_moves * 10 + my_space) - (op_moves * 10 + op_space)
+
+    def flood_fill_count(self, start_pos):
+        visited = set()
+        stack = [start_pos]
+
+        while stack:
+            pos = stack.pop()
+            if pos not in visited and not self.is_position_blocked(pos):
+                visited.add(pos)
+                x, y = pos
+                stack.extend([
+                    (x - 1, y),
+                    (x + 1, y),
+                    (x, y - 1),
+                    (x, y + 1)
+                ])
+
+        return len(visited)

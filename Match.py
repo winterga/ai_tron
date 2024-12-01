@@ -9,8 +9,10 @@ class Match:
 
     def tick(self):
         # get next move
+        # print(self.gameObj.state)
         for player in self.gameObj.players:
             self.gameObj.players[player].tick()
+            self.gameObj.players[player].timeAlive += 1
 
         # check if they collide with each at same time
         if self.checkTie():
@@ -41,6 +43,8 @@ class Match:
         for player in self.gameObj.players:
 
             nextPosition = self.gameObj.players[player].convertDirectionToLocation(
+                self.gameObj.players[player].x,
+                self.gameObj.players[player].y,
                 self.gameObj.players[player].direction)
 
             if nextPosition in nextPositions:
@@ -81,6 +85,8 @@ class Match:
                 self.gameObj.AStarVNN_Tie += 1
             elif self.gameMode == 9:
                 self.gameObj.ABVNN_Tie += 1
+            elif self.gameMode == 11:
+                self.gameObj.DqVDq_Tie += 1
 
             self.gameObj.gameOverMenu = GameOverMenu(
                 self.gameObj, "Nobody", self.gameMode)
@@ -140,6 +146,12 @@ class Match:
                     self.gameObj.ABVNN_ABWins += 1
                 elif winner == 2:
                     self.gameObj.ABVNN_NNWins += 1
+                    
+            elif self.gameMode == 11:
+                if winner == 1:
+                    self.gameObj.DqVDq_Dq1Wins += 1
+                elif winner == 2:
+                    self.gameObj.DqVDq_Dq2Wins += 1
 
             self.gameObj.gameOverMenu = GameOverMenu(
                 self.gameObj, "Player " + str(winner), self.gameMode)
