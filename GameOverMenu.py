@@ -34,9 +34,9 @@ class GameOverMenu:
 			stats2 = "Bot Wins: " + str(self.game.PVE_BotWins)
 			stats3 = "Ties: " + str (self.game.PVE_Tie)
 		elif self.matchType == 2:
-			stats1 = "Bot 1 Wins: " + str(self.game.EVE_Bot1Wins)
-			stats2 = "Bot 2 Wins: " + str(self.game.EVE_Bot2Wins)
-			stats3 = "Ties: " + str (self.game.EVE_Tie)
+			stats1 = "Bot 1 Wins: " + str(self.game.GVG_Bot1Wins)
+			stats2 = "Bot 2 Wins: " + str(self.game.GVG_Bot2Wins)
+			stats3 = "Ties: " + str (self.game.GVG_Tie)
 		
 		#Build titles
 		title = titleFont.render(winText, 1, (255, 255, 255))

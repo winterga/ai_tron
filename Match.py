@@ -1,5 +1,5 @@
 from GameOverMenu import GameOverMenu
-
+import pygame
 
 class Match:
     def __init__(self, gameObj, gameMode):
@@ -25,7 +25,7 @@ class Match:
             self.gameObj.players[player].checkForCollision(self.gameObj.players[player].direction)
 
             self.gameObj.players[player].movePlayer()
-
+            
         # check if anyone is dead
         self.checkStatus(False)
 
@@ -64,30 +64,35 @@ class Match:
 
         # if both are dead (i.e. tie)
         if tieStatus or aliveCount == 0:
-            # render them hitting each other
-            # if tieStatus:
-            #     for player in self.gameObj.players:
-            #         self.gameObj.players[player].movePlayer()
-            #     self.gameObj.screen.fill((0,0,0))
-            #     self.gameObj.board.drawGrid()
-            #     self.gameObj.board.drawTieSquare(self.gameObj.players[1].posX,self.gameObj.players[1].posY)
 
             self.active = False
+            print("Tie detected or no players alive.")
             if self.gameMode == 1:
                 self.gameObj.PVE_Tie += 1
             elif self.gameMode == 0:
                 self.gameObj.PVP_Tie += 1
             elif self.gameMode == 2:
-                self.gameObj.EVE_Tie += 1
+                self.gameObj.GVG_Tie += 1
+            elif self.gameMode == 10:
+                self.gameObj.AStarVGenetic_Tie += 1
+            elif self.gameMode == 5:
+                self.gameObj.ABVGenetic_Tie += 1
+            elif self.gameMode == 6:
+                self.gameObj.NNVGenetic_Tie += 1
+            elif self.gameMode == 7:
+                self.gameObj.AStarVAB_Tie += 1
+            elif self.gameMode == 8:
+                self.gameObj.AStarVNN_Tie += 1
+            elif self.gameMode == 9:
+                self.gameObj.ABVNN_Tie += 1
 
             self.gameObj.gameOverMenu = GameOverMenu(
                 self.gameObj, "Nobody", self.gameMode)
             self.gameObj.switchToMenu("GAME_OVER")
         # if one is dead
         elif aliveCount == 1:
-            print("checkStatus")
             self.active = False
-
+            print("Single player alive. Ending match.")
             winner = ""
             for player in self.gameObj.players:
                 if self.gameObj.players[player].alive:
@@ -106,9 +111,39 @@ class Match:
                     self.gameObj.PVP_Player2Wins += 1
             elif self.gameMode == 2:
                 if winner == 1:
-                    self.gameObj.EVE_Bot1Wins += 1
+                    self.gameObj.GVG_Bot1Wins += 1
                 elif winner == 2:
-                    self.gameObj.EVE_Bot2Wins += 1
+                    self.gameObj.GVG_Bot2Wins += 1
+            elif self.gameMode == 10:
+                if winner == 1:
+                    self.gameObj.AStarVGenetic_AStarWins += 1
+                elif winner == 2:
+                    self.gameObj.AStarVGenetic_GeneticWins += 1
+            elif self.gameMode == 5:
+                if winner == 1:
+                    self.gameObj.ABVGenetic_ABWins += 1
+                elif winner == 2:
+                    self.gameObj.ABVGenetic_GeneticWins += 1
+            elif self.gameMode == 6:
+                if winner == 1:
+                    self.gameObj.NNVGenetic_NNWins += 1
+                elif winner == 2:
+                    self.gameObj.NNVGenetic_GeneticWins += 1
+            elif self.gameMode == 7:
+                if winner == 1:
+                    self.gameObj.AStarVAB_AStarWins += 1
+                elif winner == 2:
+                    self.gameObj.AStarVAB_ABWins += 1
+            elif self.gameMode == 8:
+                if winner == 1:
+                    self.gameObj.AStarVNN_AStarWins += 1
+                elif winner == 2:
+                    self.gameObj.AStarVNN_NNWins += 1
+            elif self.gameMode == 9:
+                if winner == 1:
+                    self.gameObj.ABVNN_ABWins += 1
+                elif winner == 2:
+                    self.gameObj.ABVNN_NNWins += 1
 
             self.gameObj.gameOverMenu = GameOverMenu(
                 self.gameObj, "Player " + str(winner), self.gameMode)
