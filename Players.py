@@ -251,31 +251,131 @@ class Bot(Player):
 
 class Human(Player):
     def __init__(self, gameObj, color, ID, x, y, direction, keybinds):
-        super().__init__(gameObj, color, ID, x, y, direction)
+      super().__init__(gameObj, color, ID, x, y, direction)
 
-        self.p_up = keybinds[0]
-        self.p_left = keybinds[1]
-        self.p_down = keybinds[2]
-        self.p_right = keybinds[3]
+      self.p_up = keybinds[0]
+      self.p_left = keybinds[1]
+      self.p_down = keybinds[2]
+      self.p_right = keybinds[3]
 
-    def tick(self):
-        while self.directionQueue:
+  def tick(self):
+      while self.directionQueue:
 
-            if self.isInvalidDirection(self.directionQueue[0]) or self.directionQueue[0] == self.direction:
+          if self.isInvalidDirection(self.directionQueue[0]) or self.directionQueue[0] == self.direction:
 
-                self.directionQueue.pop(0)
-            else:
-                self.direction = self.directionQueue.pop(0)
+              self.directionQueue.pop(0)
+          else:
+              self.direction = self.directionQueue.pop(0)
 
-            self.prevPos = (self.x, self.y)  # why do we need this again?
+          self.prevPos = (self.x, self.y)  # why do we need this again?
 
-    def event(self, event):
-        if event.type == pygame.KEYDOWN:
-            if event.key == self.p_up:
-                self.directionQueue.append(Player.UP)
-            elif event.key == self.p_left:
-                self.directionQueue.append(Player.LEFT)
-            elif event.key == self.p_down:
-                self.directionQueue.append(Player.DOWN)
-            elif event.key == self.p_right:
-                self.directionQueue.append(Player.RIGHT)
+  def event(self, event):
+      if event.type == pygame.KEYDOWN:
+          if event.key == self.p_up:
+              self.directionQueue.append(Player.UP)
+          elif event.key == self.p_left:
+              self.directionQueue.append(Player.LEFT)
+          elif event.key == self.p_down:
+              self.directionQueue.append(Player.DOWN)
+          elif event.key == self.p_right:
+              self.directionQueue.append(Player.RIGHT)
+
+              
+class GenComputer(Player):
+	def __init__(self, gameObj, color, ID, x, y, direction, genome):
+		super(GenComputer, self).__init__(gameObj, color, ID, x, y, direction)
+		self.genome = genome
+
+	def tick(self):
+		self.strategyGenetic()
+
+	def distanceToSelf(self, direction):
+		next_x, next_y = self.convertDirectionToLocation(direction)
+
+		min_distance = float('inf')
+
+		for point in self.game.board.getBotTrail(self.playerid):
+			trail_x, trail_y = point
+			distance = abs(next_x - trail_x) + abs(next_y - trail_y)
+			min_distance = min(min_distance, distance)
+
+		return min_distance
+	
+	def predictTrap(self, direction):
+		next_x, next_y = self.convertDirectionToLocation(direction)
+
+		temp_board = self.game.board.copy()
+		temp_board.grid[next_y][next_x] = self.ID
+
+		reachable_area = self.calculateReachableArea(next_x, next_y, temp_board)
+
+		trap_threshold = 30
+
+		return reachable_area < trap_threshold
+
+	def calculateReachableArea(self, x, y, board):
+		visited = set()
+		queue = [(x, y)]
+		reachable_count = 0
+
+		while queue:
+			cx, cy = queue.pop(0)
+
+			if (cx, cy) in visited:
+				continue
+
+			visited.add((cx, cy))
+			if not board.isObstacle(cx, cy) or (cx == x and cy == y):
+				reachable_count += 1
+
+				neighbors = [
+					(cx + 1, cy), (cx - 1, cy),
+					(cx, cy + 1), (cx, cy - 1)
+				]
+				for nx, ny in neighbors:
+					if (nx, ny) not in visited:
+						queue.append((nx, ny))
+
+		return reachable_count
+
+	def strategyGenetic(self):
+		max_score = -float('inf')
+		best_direction = None
+		opponentId = (set(self.game.players) - {self.ID}).pop()
+
+		for direction in range(4):
+			if self.wouldCollide(direction):
+				continue
+				
+			if self.predictTrap(direction):
+				continue
+
+			max_attempts = 10
+			attempts = 0
+			opponent_direction = random.choice(range(4))
+			while self.game.players[opponentId].wouldCollide(opponent_direction) and attempts < max_attempts:
+				opponent_direction = random.choice(range(4))
+				attempts += 1
+
+			if attempts >= max_attempts:
+				opponent_direction = Player.UP
+
+			distance_to_self = self.distanceToSelf(direction)
+			survival = 1 if not self.wouldCollide(direction) else 0
+			self_collision_penalty = -10 / (distance_to_self + 1)
+			aggression = -abs(direction - opponent_direction)
+
+			score = (
+				self.genome[0] * survival +
+				self.genome[1] * aggression +
+				self_collision_penalty
+			)
+
+			if score > max_score:
+				max_score = score
+				best_direction = direction
+
+		if best_direction is None:
+			best_direction = self.direction
+
+		self.direction = best_direction
