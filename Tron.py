@@ -3,7 +3,7 @@ from GameBoard import GameBoard
 from MainMenu import MainMenu
 from GameOverMenu import GameOverMenu
 from Match import Match
-from Players import Player, Human, GenComputer, Bot
+from Players import Player, Human, GenComputer, PruneComputer, Bot, aStarComputer
 import random
 from GeneticTraining import train_genetic
 from Stats import StatsScreen
@@ -72,7 +72,8 @@ class Tron:
         self.ABVNN_NNWins = 0
         self.ABVNN_Tie = 0
 
-        self.best_genome = [0.42430839081823557, 0.6795954452427644, 0.8502043539767576]
+        self.best_genome = [0.42430839081823557,
+                            0.6795954452427644, 0.8502043539767576]
         self.num_tourney_rounds = 10
 
         self.statsScreen = StatsScreen(self)
@@ -101,20 +102,20 @@ class Tron:
                     case 'STATS_SCREEN':
                         self.statsScreen.event(event)
 
-                        
             if self.state == 'MAIN_MENU' or self.state == 'STATS_SCREEN':
                 pass
             if self.state == 'PLAYING':
                 self.match.tick()
             if self.state == 'TRAINING_GENETIC':
                 continue
-            
+
             pygame.display.flip()
             if self.state == 'PLAYING':
-                clock.tick(15) # fps value of 15 for slower movement (decrease to move slower, increase to move quicker)
-            else: 
-                clock.tick(60) # menu fps
-                
+                # fps value of 15 for slower movement (decrease to move slower, increase to move quicker)
+                clock.tick(15)
+            else:
+                clock.tick(60)  # menu fps
+
         # game not active
         pygame.quit()
         quit()
@@ -141,8 +142,10 @@ class Tron:
                                     Player.LEFT, (pygame.K_UP, pygame.K_LEFT, pygame.K_DOWN, pygame.K_RIGHT))
             # PVE - 1 human and 1 bot
         elif matchType == 1:
-            self.players[1] = Human(self, (220, 0, 30), 1, 3, 3, Player.RIGHT, (pygame.K_UP, pygame.K_LEFT, pygame.K_DOWN, pygame.K_RIGHT))
-            self.players[2] = Bot(self, (30, 220, 0), 2, self.board.xTiles-4, self.board.yTiles-4, Player.LEFT)
+            self.players[1] = Human(self, (220, 0, 30), 1, 3, 3, Player.RIGHT, (
+                pygame.K_UP, pygame.K_LEFT, pygame.K_DOWN, pygame.K_RIGHT))
+            self.players[2] = Bot(
+                self, (30, 220, 0), 2, self.board.xTiles-4, self.board.yTiles-4, Player.LEFT)
         elif matchType == 2:
             self.state = 'TRAINING_GENETIC'
             self.start_training(self)
@@ -153,17 +156,21 @@ class Tron:
             self.switchToMenu('STATS_SCREEN')
 
         if (matchType != 2 and matchType != 3 and matchType != 4):
-            #Build match and set program state
+            # Build match and set program state
             self.match = Match(self, matchType)
             self.state = 'PLAYING'
 
     def tournament(self):
         # A star vs Genetic
         for i in range(self.num_tourney_rounds):
-            self.board = GameBoard(self, self.xTiles, self.yTiles, self.tileSize)
+            self.board = GameBoard(
+                self, self.xTiles, self.yTiles, self.tileSize)
             self.players = {}
-            self.players[1] = Bot(self, (220, 0, 30), 1, 3, 3, Player.RIGHT) # FIXME - add A star bot here
-            self.players[2] = GenComputer(self, (90, 220, 50), 2, self.board.xTiles - 4, self.board.yTiles - 4, Player.LEFT, self.best_genome)
+            # FIXME - add A star bot here
+            self.players[1] = aStarComputer(  # added astar
+                self, (220, 0, 30), 1, 3, 3, Player.RIGHT)
+            self.players[2] = GenComputer(
+                self, (90, 220, 50), 2, self.board.xTiles - 4, self.board.yTiles - 4, Player.LEFT, self.best_genome)
 
             match = Match(self, 10)
             clock = pygame.time.Clock()
@@ -174,13 +181,17 @@ class Tron:
                 self.board.drawGrid()
                 pygame.display.flip()
                 clock.tick(100)
-        
+
         # Alpha-Beta vs Genetic
         for i in range(self.num_tourney_rounds):
-            self.board = GameBoard(self, self.xTiles, self.yTiles, self.tileSize)
+            self.board = GameBoard(
+                self, self.xTiles, self.yTiles, self.tileSize)
             self.players = {}
-            self.players[1] = Bot(self, (220, 0, 30), 1, 3, 3, Player.RIGHT) # FIXME - add Alpha-Beta bot here
-            self.players[2] = GenComputer(self, (90, 220, 50), 2, self.board.xTiles - 4, self.board.yTiles - 4, Player.LEFT, self.best_genome)
+            # FIXME - add Alpha-Beta bot here
+            self.players[1] = PruneComputer(
+                self, (220, 0, 30), 1, 3, 3, Player.RIGHT)
+            self.players[2] = GenComputer(
+                self, (90, 220, 50), 2, self.board.xTiles - 4, self.board.yTiles - 4, Player.LEFT, self.best_genome)
 
             match = Match(self, 5)
             clock = pygame.time.Clock()
@@ -194,10 +205,13 @@ class Tron:
 
         # Neural Network vs Genetic
         for i in range(self.num_tourney_rounds):
-            self.board = GameBoard(self, self.xTiles, self.yTiles, self.tileSize)
+            self.board = GameBoard(
+                self, self.xTiles, self.yTiles, self.tileSize)
             self.players = {}
-            self.players[1] = Bot(self, (220, 0, 30), 1, 3, 3, Player.RIGHT) # FIXME - add Neural Network bot here
-            self.players[2] = GenComputer(self, (90, 220, 50), 2, self.board.xTiles - 4, self.board.yTiles - 4, Player.LEFT, self.best_genome)
+            # FIXME - add Neural Network bot here
+            self.players[1] = Bot(self, (220, 0, 30), 1, 3, 3, Player.RIGHT)
+            self.players[2] = GenComputer(
+                self, (90, 220, 50), 2, self.board.xTiles - 4, self.board.yTiles - 4, Player.LEFT, self.best_genome)
 
             match = Match(self, 6)
             clock = pygame.time.Clock()
@@ -211,10 +225,14 @@ class Tron:
 
         # A star vs. Alpha-Beta
         for i in range(self.num_tourney_rounds):
-            self.board = GameBoard(self, self.xTiles, self.yTiles, self.tileSize)
+            self.board = GameBoard(
+                self, self.xTiles, self.yTiles, self.tileSize)
             self.players = {}
-            self.players[1] = Bot(self, (220, 0, 30), 1, 3, 3, Player.RIGHT) # FIXME - add A star bot here
-            self.players[2] = Bot(self, (90, 220, 50), 2, self.board.xTiles - 4, self.board.yTiles - 4, Player.LEFT) # FIXME - add Alpha-Beta bot here
+            # FIXME - add A star bot here
+            self.players[1] = aStarComputer(
+                self, (220, 0, 30), 1, 3, 3, Player.RIGHT)
+            self.players[2] = PruneComputer(self, (90, 220, 50), 2, self.board.xTiles - 4,
+                                            self.board.yTiles - 4, Player.LEFT)  # FIXME - add Alpha-Beta bot here
 
             match = Match(self, 7)
             clock = pygame.time.Clock()
@@ -225,13 +243,17 @@ class Tron:
                 self.board.drawGrid()
                 pygame.display.flip()
                 clock.tick(100)
-        
+
         # A star vs. Neural Network
         for i in range(self.num_tourney_rounds):
-            self.board = GameBoard(self, self.xTiles, self.yTiles, self.tileSize)
+            self.board = GameBoard(
+                self, self.xTiles, self.yTiles, self.tileSize)
             self.players = {}
-            self.players[1] = Bot(self, (220, 0, 30), 1, 3, 3, Player.RIGHT) # FIXME - add A star bot here
-            self.players[2] = Bot(self, (90, 220, 50), 2, self.board.xTiles - 4, self.board.yTiles - 4, Player.LEFT) # FIXME - add Neural Network bot here
+            # FIXME - add A star bot here
+            self.players[1] = aStarComputer(
+                self, (220, 0, 30), 1, 3, 3, Player.RIGHT)
+            self.players[2] = Bot(self, (90, 220, 50), 2, self.board.xTiles - 4,
+                                  self.board.yTiles - 4, Player.LEFT)  # FIXME - add Neural Network bot here
 
             match = Match(self, 8)
             clock = pygame.time.Clock()
@@ -245,10 +267,14 @@ class Tron:
 
         # Alpha-Beta vs. Neural Network
         for i in range(self.num_tourney_rounds):
-            self.board = GameBoard(self, self.xTiles, self.yTiles, self.tileSize)
+            self.board = GameBoard(
+                self, self.xTiles, self.yTiles, self.tileSize)
             self.players = {}
-            self.players[1] = Bot(self, (220, 0, 30), 1, 3, 3, Player.RIGHT) # FIXME - add Alpha-Beta bot here
-            self.players[2] = Bot(self, (90, 220, 50), 2, self.board.xTiles - 4, self.board.yTiles - 4, Player.LEFT) # FIXME - add Neural Network bot here
+            # FIXME - add Alpha-Beta bot here
+            self.players[1] = PruneComputer(
+                self, (220, 0, 30), 1, 3, 3, Player.RIGHT)
+            self.players[2] = Bot(self, (90, 220, 50), 2, self.board.xTiles - 4,
+                                  self.board.yTiles - 4, Player.LEFT)  # FIXME - add Neural Network bot here
 
             match = Match(self, 9)
             clock = pygame.time.Clock()
@@ -261,7 +287,8 @@ class Tron:
                 clock.tick(100)
 
     def start_training(self, tron):
-        initial_population = [[random.random() for _ in range(3)] for _ in range(20)]
+        initial_population = [[random.random() for _ in range(3)]
+                              for _ in range(20)]
         print("Starting genetic algorithm training...")
 
         trained_population = train_genetic(
@@ -275,14 +302,16 @@ class Tron:
         best_genome = trained_population[0]
         self.best_genome = best_genome
         print(f"Best genome: {best_genome}")
-        self.screen.fill((0,0,0))
+        self.screen.fill((0, 0, 0))
         self.switchToMenu("MAIN_MENU")
 
     def simulate_genetic(self, genome1, genome2):
         self.board = GameBoard(self, self.xTiles, self.yTiles, self.tileSize)
         self.players = {}
-        self.players[1] = GenComputer(self, (220, 0, 30), 1, 3, 3, Player.RIGHT, genome1)
-        self.players[2] = GenComputer(self, (90, 220, 50), 2, self.board.xTiles - 4, self.board.yTiles - 4, Player.LEFT, genome2)
+        self.players[1] = GenComputer(
+            self, (220, 0, 30), 1, 3, 3, Player.RIGHT, genome1)
+        self.players[2] = GenComputer(
+            self, (90, 220, 50), 2, self.board.xTiles - 4, self.board.yTiles - 4, Player.LEFT, genome2)
 
         match = Match(self, 2)
 
