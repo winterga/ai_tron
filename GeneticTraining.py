@@ -8,7 +8,7 @@ def fitness(game_results):
 
     distance_to_self = bot.distanceToSelf(bot.direction)
 
-    reachable_area = bot.calculateReachableArea(bot.posX, bot.posY, board_state)
+    reachable_area = bot.calculateReachableArea(bot.x, bot.y, board_state)
 
     survival_weight = 2
     win_weight = 5
