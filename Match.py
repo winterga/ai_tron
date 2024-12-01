@@ -9,7 +9,7 @@ class Match:
 
     def tick(self):
         # get next move
-        print(self.gameObj.state)
+        # print(self.gameObj.state)
         for player in self.gameObj.players:
             self.gameObj.players[player].tick(self.gameObj.state)
             self.gameObj.players[player].timeAlive += 1

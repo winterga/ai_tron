@@ -94,31 +94,57 @@ class Tron:
         # reset game environment and return initial state
         self.board = GameBoard(self, self.xTiles, self.yTiles, self.tileSize)
         self.players = {
-            1: Bot(self, (220, 0, 30), 0, 3, 3, Player.RIGHT),
-            2: Bot(self, (30, 220, 0), 1, self.board.xTiles-4, self.board.yTiles-4, Player.LEFT, deepQModel=model)
+            1: Bot(self, (220, 0, 30), 1, 3, 3, Player.RIGHT),
+            2: Bot(self, (30, 220, 0), 2, self.board.xTiles-4, self.board.yTiles-4, Player.LEFT, deepQModel=model)
         }
         self.match = Match(self, 2) # EVE match
         self.state = 'TRAINING'
         return self.getEnvState()
     
-    def getEnvState(self):
-        # return the numerical representation of the game environment
+    # def getEnvState(self):
+    #     # return the numerical representation of the game environment
         
-        env_state = []
-        for player in self.players.values():
-            env_state.extend([player.posX / self.board.xTiles, player.posY / self.board.yTiles, player.direction / 3])
+    #     env_state = []
+    #     for player in self.players.values():
+    #         env_state.extend([player.posX / self.board.xTiles, player.posY / self.board.yTiles, player.direction / 3])
             
-        # calculate a board state, simplifying it to include a 1 if the tile is occupied by a player or wall, 0 otherwise
+    #     # calculate a board state, simplifying it to include a 1 if the tile is occupied by a player or wall, 0 otherwise
+    #     obstacle_map = np.zeros((self.board.xTiles, self.board.yTiles))
+    #     for x in range(self.board.xTiles):
+    #         for y in range(self.board.yTiles):
+    #             if self.board.grid[x][y] != 0:
+    #                 obstacle_map[x][y] = 1
+        
+        
+    #     env_state.extend(np.array(obstacle_map).flatten())
+        
+    #     # print(f"Env state, {len(env_state)},  {env_state}")
+        
+        
+    #     return env_state
+    
+    def getEnvState(self):
+    # Gather player-related state information (scaled positions and directions)
+        players_state = []
+        for player in self.players.values():
+            players_state.extend([
+                player.posX / self.board.xTiles, 
+                player.posY / self.board.yTiles, 
+                player.direction / 3
+            ])
+        
+        # Construct the obstacle map (2D array)
         obstacle_map = np.zeros((self.board.xTiles, self.board.yTiles))
         for x in range(self.board.xTiles):
             for y in range(self.board.yTiles):
                 if self.board.grid[x][y] != 0:
                     obstacle_map[x][y] = 1
-        
-        
-        env_state.extend(np.array(obstacle_map).flatten())
-        
-        return env_state
+
+        # Return the state as a dictionary for better structure
+        return {
+            "map": obstacle_map,       # 2D array of 0s and 1s
+            "player": players_state       # List of player-related state values
+        }
         
     def step(self):
         # perform action for both players
@@ -131,24 +157,27 @@ class Tron:
         # Determine rewards
         current_time = max([player.timeAlive for player in self.players.values()])
         rewards = {player_id: (0, 0) for player_id in self.players}
+       
         if not self.match.active:  # Check if the game is over
             for player_id, player in self.players.items():
                 if player.alive:
                     opponent = [p for p in self.players.values() if p.playerid != player_id][0]
                     territory = player.calculateDirectionTerritory(player.direction, opponent.direction)
-                    rewards[player_id] = 100 + player.timeAlive / current_time + 0.001 * territory   # Reward the winner
+                    rewards[player_id] = 100   # Reward the winner
                 else:
-                    rewards[player_id] = -100  # Penalize the loser
+                    rewards[player_id] = -150  # Penalize the loser
                     
         else:
             for player_id, player in self.players.items():
                 if player.alive:
                     opponent = [p for p in self.players.values() if p.playerid != player_id][0]
                     territory = player.calculateDirectionTerritory(player.direction, opponent.direction)
-                    rewards[player_id] = 1 + 0.001 * territory
+                    distance_to_wall = player.distanceToWall(player.posX, player.posY, player.direction)
+                    rewards[player_id] = 1 + 0.001 * territory + 0.005 * distance_to_wall
 
         # Check if the game is over
         done = not self.match.active
+        
 
         return next_state, rewards, done
     
@@ -161,7 +190,7 @@ class Tron:
         gamma = 0.95
         epsilon = 1.0
         epsilon_min = 0.01
-        epsilon_decay = 0.995
+        epsilon_decay = 0.9975
         alpha = 0.005
         batch_size = 32
         

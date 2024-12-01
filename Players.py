@@ -141,6 +141,10 @@ class Player:
 
 		return playerTerritory[self.playerid-1]
 
+	def distanceToClosestWall(self, x, y): # used for discouraging wall hugging
+		'''returns the distance to the closest wall in any direction'''
+		return min(x, y, self.game.board.xTiles-x, self.game.board.yTiles-y)
+
 	# place holders for child classes
 	def tick(self):
 		pass
@@ -164,16 +168,18 @@ class Bot(Player):
             action for action in range(4) 
             if not self.game.players[self.playerid].wouldCollide(action)
         	]
+			print(valid_actions)
 			self.direction = self.deepQModel.predict(state, valid_actions)
-			# print("Predicted direction: ", self.direction)
+			
+			print("Predicted direction: ", self.direction)
     
 	def tick(self, gameState):
         # print("Bot tick")
         # print(self.ID)
 		if self.deepQModel is None:
             # print("No model provided for DeepQStrategy... using most territory strategy")
-			# self.strategyMostTerritory()
-			self.strategyRandom()
+			self.strategyMostTerritory()
+			# self.strategyRandom()
 		else:
 			self.deepQStrategy(gameState)
             
