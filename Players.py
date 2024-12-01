@@ -465,7 +465,7 @@ class GenComputer(Player):
         reachable_area = self.calculateReachableArea(
             next_x, next_y, temp_board)
 
-        trap_threshold = 30
+        trap_threshold = 50
 
         return reachable_area < trap_threshold
 
