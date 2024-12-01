@@ -80,8 +80,14 @@ class Tron:
         self.DqVDq_Tie = 0
         
 
-        self.best_genome = [0.42430839081823557,
-                            0.6795954452427644, 0.8502043539767576]
+
+        self.AStarTimes = []
+        self.ABTimes = []
+        self.GeneticTimes = []
+        self.NNTimes = []
+
+        self.best_genome = [0.42430839081823557, 0.6795954452427644, 0.8502043539767576]
+
         self.num_tourney_rounds = 10
 
         self.statsScreen = StatsScreen(self)
@@ -308,13 +314,19 @@ class Tron:
 
             match = Match(self, 10)
             clock = pygame.time.Clock()
+            ticks = 0
             while match.active:
                 match.tick()
-
+                ticks += 1
                 self.screen.fill((0, 0, 0))
                 self.board.drawGrid()
                 pygame.display.flip()
                 clock.tick(100)
+
+
+            self.AStarTimes.append(ticks)
+            self.GeneticTimes.append(ticks)
+        
 
         # Alpha-Beta vs Genetic
         for i in range(self.num_tourney_rounds):
@@ -329,13 +341,17 @@ class Tron:
 
             match = Match(self, 5)
             clock = pygame.time.Clock()
+            ticks = 0
             while match.active:
                 match.tick()
-
+                ticks += 1
                 self.screen.fill((0, 0, 0))
                 self.board.drawGrid()
                 pygame.display.flip()
                 clock.tick(100)
+
+            self.ABTimes.append(ticks)
+            self.GeneticTimes.append(ticks)
 
         # Neural Network vs Genetic
         for i in range(self.num_tourney_rounds):
@@ -349,13 +365,17 @@ class Tron:
 
             match = Match(self, 6)
             clock = pygame.time.Clock()
+            ticks = 0
             while match.active:
                 match.tick()
-
+                ticks += 1
                 self.screen.fill((0, 0, 0))
                 self.board.drawGrid()
                 pygame.display.flip()
                 clock.tick(100)
+
+            self.GeneticTimes.append(ticks)
+            self.NNTimes.append(ticks)
 
         # A star vs. Alpha-Beta
         for i in range(self.num_tourney_rounds):
@@ -370,13 +390,19 @@ class Tron:
 
             match = Match(self, 7)
             clock = pygame.time.Clock()
+            ticks = 0
             while match.active:
                 match.tick()
-
+                ticks += 1
                 self.screen.fill((0, 0, 0))
                 self.board.drawGrid()
                 pygame.display.flip()
                 clock.tick(100)
+
+
+            self.AStarTimes.append(ticks)
+            self.ABTimes.append(ticks)
+        
 
         # A star vs. Neural Network
         for i in range(self.num_tourney_rounds):
@@ -391,13 +417,17 @@ class Tron:
 
             match = Match(self, 8)
             clock = pygame.time.Clock()
+            ticks = 0
             while match.active:
                 match.tick()
-
+                ticks += 1
                 self.screen.fill((0, 0, 0))
                 self.board.drawGrid()
                 pygame.display.flip()
                 clock.tick(100)
+
+            self.AStarTimes.append(ticks)
+            self.NNTimes.append(ticks)
 
         # Alpha-Beta vs. Neural Network
         for i in range(self.num_tourney_rounds):
@@ -412,13 +442,17 @@ class Tron:
 
             match = Match(self, 9)
             clock = pygame.time.Clock()
+            ticks = 0
             while match.active:
                 match.tick()
-
+                ticks += 1
                 self.screen.fill((0, 0, 0))
                 self.board.drawGrid()
                 pygame.display.flip()
                 clock.tick(100)
+
+            self.ABTimes.append(ticks)
+            self.NNTimes.append(ticks)
 
     def start_training(self, tron):
         initial_population = [[random.random() for _ in range(3)]

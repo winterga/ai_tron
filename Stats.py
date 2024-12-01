@@ -15,6 +15,29 @@ class StatsScreen:
         title_surface = self.font_title.render("Game Statistics", True, (255, 255, 255))  # White text
         self.game.screen.blit(title_surface, (self.game.scr_x // 2 - title_surface.get_width() // 2, 20))
 
+        AStar_avgtime = 0
+        AB_avgtime = 0
+        Genetic_avgtime = 0
+        NN_avgtime = 0
+
+        for i in self.game.AStarTimes:
+            AStar_avgtime += i
+        for i in self.game.ABTimes:
+            AB_avgtime += i
+        for i in self.game.GeneticTimes:
+            Genetic_avgtime += i
+        for i in self.game.NNTimes:
+            NN_avgtime += i
+
+        if len(self.game.AStarTimes) > 0:
+            AStar_avgtime = round(AStar_avgtime / len(self.game.AStarTimes), 2)
+        if len(self.game.ABTimes) > 0:
+            AB_avgtime = round(AB_avgtime / len(self.game.ABTimes), 2)
+        if len(self.game.GeneticTimes) > 0:
+            Genetic_avgtime = round(Genetic_avgtime / len(self.game.GeneticTimes), 2)
+        if len(self.game.NNTimes) > 0:
+            NN_avgtime = round(NN_avgtime / len(self.game.NNTimes), 2)
+
         # Stats data
         stats = [
             f"PVE Player Wins: {self.game.PVE_PlayerWins}",
@@ -40,7 +63,11 @@ class StatsScreen:
             f"A* vs NN - Ties: {self.game.AStarVNN_Tie}",
             f"AB vs NN - AB Wins: {self.game.ABVNN_ABWins}",
             f"AB vs NN - NN Wins: {self.game.ABVNN_NNWins}",
-            f"AB vs NN - Ties: {self.game.ABVNN_Tie}"
+            f"AB vs NN - Ties: {self.game.ABVNN_Tie}",
+            f"A* Avg Time Survived: {AStar_avgtime} ticks",
+            f"AB Avg Time Survived: {AB_avgtime} ticks",
+            f"Genetic Avg Time Survived: {Genetic_avgtime} ticks",
+            f"NN Avg Time Survived: {NN_avgtime} ticks"
         ]
 
         # Split stats into two columns
@@ -52,7 +79,7 @@ class StatsScreen:
         start_y = 100
         line_spacing = 30
         column_1_x = 50
-        column_2_x = self.game.scr_x // 2 + 50
+        column_2_x = self.game.scr_x // 2 + 25
 
         # Render column 1
         for i, stat in enumerate(column_1):
