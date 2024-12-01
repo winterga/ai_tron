@@ -37,6 +37,10 @@ class GameOverMenu:
 			stats1 = "Bot 1 Wins: " + str(self.game.GVG_Bot1Wins)
 			stats2 = "Bot 2 Wins: " + str(self.game.GVG_Bot2Wins)
 			stats3 = "Ties: " + str (self.game.GVG_Tie)
+		elif self.matchType == 11:
+			stats1 = "Bot 1 Wins: " + str(self.game.DqVDq_Dq1Wins)
+			stats2 = "Bot 2 Wins: " + str(self.game.DqVDq_Dq2Wins)
+			stats3 = "Ties: " + str (self.game.DqVDq_Tie)
 		
 		#Build titles
 		title = titleFont.render(winText, 1, (255, 255, 255))
