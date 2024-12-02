@@ -101,8 +101,8 @@ class Tron:
                 match self.state:
                     case 'MAIN_MENU':
                         self.mainMenu.eventTick(event)
-                        if event.type == pygame.KEYDOWN and event.key == pygame.K_t: 
-                            self.state = 'TRAINING'
+                        # if event.type == pygame.KEYDOWN and event.key == pygame.K_t: 
+                        #     self.state = 'TRAINING'
                     case 'PLAYING':
                         print("Playing")
                         self.match.event(event)
@@ -278,6 +278,8 @@ class Tron:
             self.state = 'TRAINING_GENETIC'
             self.start_training(self)
         elif matchType == 3:
+            self.state = 'TRAINING'
+        elif matchType == 4:
             trainedDeepQ = DeepQAgent(3, self.getEnvState(), 4, 0.95, 1.0, 0.01, 0.995, 0.01)
             trainedDeepQ.load("deepq_model.pth")
             self.players[1] = Human(self, (220, 0, 30), 1, 3, 3, Player.RIGHT, (
@@ -288,14 +290,14 @@ class Tron:
             self.state = 'PLAYING'
 
             
-        elif matchType == 4:
+        elif matchType == 5:
             self.state = 'PLAYING'
             self.tournament()
-        elif matchType == 5:
+        elif matchType == 6:
             self.switchToMenu('STATS_SCREEN')
 
 
-        if (matchType != 2 and matchType != 3 and matchType != 4 and matchType != 5):
+        if (matchType != 2 and matchType != 3 and matchType != 4 and matchType != 5 and matchType != 6):
             # Build match and set program state
             self.match = Match(self, matchType)
             self.state = 'PLAYING'
