@@ -87,6 +87,8 @@ class Match:
                 self.gameObj.ABVNN_Tie += 1
             elif self.gameMode == 11:
                 self.gameObj.DqVDq_Tie += 1
+            elif self.gameMode == 12:
+                self.gameObj.PlayerVDq_Tie += 1
 
             self.gameObj.gameOverMenu = GameOverMenu(
                 self.gameObj, "Nobody", self.gameMode)
@@ -152,6 +154,11 @@ class Match:
                     self.gameObj.DqVDq_Dq1Wins += 1
                 elif winner == 2:
                     self.gameObj.DqVDq_Dq2Wins += 1
+            elif self.gameMode == 12:
+                if winner == 1:
+                    self.gameObj.PlayerVDq_PlayerWins += 1
+                elif winner == 2:
+                    self.gameObj.PlayerVDq_DqWins += 1
 
             self.gameObj.gameOverMenu = GameOverMenu(
                 self.gameObj, "Player " + str(winner), self.gameMode)

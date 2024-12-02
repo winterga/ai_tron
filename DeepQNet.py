@@ -48,7 +48,7 @@ class DeepQNetwork(nn.Module):
     
 
 class DeepQAgent:
-    def __init__(self, gameObj, state_size, action_size, hidden_size, gamma, epsilon, epsilon_min, epsilon_decay, alpha=0.01):
+    def __init__(self, gameObj, state_size, action_size, hidden_size, gamma, epsilon, epsilon_min, epsilon_decay, alpha=0.001):
         self.gameObj = gameObj
         self.state_size = state_size
         self.action_size = action_size
@@ -57,10 +57,13 @@ class DeepQAgent:
         self.epsilon = epsilon
         self.epsilon_min = epsilon_min
         self.epsilon_decay = epsilon_decay
-        self.memory = deque(maxlen=2000) # store maximum of 2000 states
+        self.memory = deque(maxlen=5000) # store maximum of 2000 states
         self.alpha = alpha
         
         self.model = DeepQNetwork()
+        self.target_model = DeepQNetwork()
+        self.target_model.load_state_dict(self.model.state_dict())
+        
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.alpha)
         self.criterion = nn.MSELoss()
         
@@ -70,6 +73,9 @@ class DeepQAgent:
             "average_loss": [],
             "epsilon": []
         }
+        
+    def update_target_model(self):
+        self.target_model.load_state_dict(self.model.state_dict())
         
     def act(self, state, playerid=2):
         valid_actions = [
@@ -94,7 +100,7 @@ class DeepQAgent:
         
         for action in range(self.action_size):
             if action not in valid_actions:
-                q_values[action] = -1e6
+                q_values[action] = -10
     
         # print(q_values)
                 
@@ -172,7 +178,9 @@ class DeepQAgent:
                 next_map_input = torch.tensor(next_state["map"], dtype=torch.float32).unsqueeze(0).unsqueeze(0)
                 next_players_input = torch.tensor(next_state["player"], dtype=torch.float32).unsqueeze(0)
                 with torch.no_grad():
-                    target += self.gamma * torch.max(self.model(next_map_input, next_players_input)).item()
+                    next_q_values = self.model(next_map_input, next_players_input)
+                    next_action = torch.argmax(next_q_values).item()
+                    target += self.gamma * next_q_values[0][next_action].item()
             
             # Target tensor for the action taken
             targets.append((action, target))
@@ -192,6 +200,7 @@ class DeepQAgent:
         loss = self.criterion(current_q, target_q)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1)
+        # print(f"Loss: {loss.item()}")
         self.optimizer.step()
 
         # print(f"Loss: {loss.item()}")
@@ -213,6 +222,9 @@ class DeepQAgent:
         """Train the agent in the given environment."""
         
         for e in range(episodes):
+            if e % 10 == 0:
+                self.update_target_model()
+                
             state = env.reset(model=self)
             
             map_input = torch.tensor(state["map"], dtype=torch.float32).unsqueeze(0).unsqueeze(0) # Shape [1, 1, 40, 40]
