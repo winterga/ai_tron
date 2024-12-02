@@ -80,14 +80,10 @@ class Tron:
         self.DqVDq_Tie = 0
         
 
-
         self.AStarTimes = []
         self.ABTimes = []
         self.GeneticTimes = []
         self.NNTimes = []
-
-        self.best_genome = [0.42430839081823557, 0.6795954452427644, 0.8502043539767576]
-
 
         self.best_genome = [0.42430839081823557, 0.6795954452427644]
 
