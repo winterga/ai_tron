@@ -64,17 +64,6 @@ class Player:
     def checkCollision(self, direction):
         if self.isCollision(direction):
             self.alive = False  # kill player
-
-    def convertDirectionToLocation(self, direction):
-        match direction:
-            case self.UP:
-                return (self.x, self.y - 1)
-            case self.RIGHT:
-                return (self.x + 1, self.y)
-            case self.DOWN:
-                return (self.x, self.y + 1)
-            case self.LEFT:
-                return (self.x - 1, self.y)
             
     def wouldCollideSelf(self, nextDirection):
         '''Check if the player would collide with their previous position going a particular direction'''
@@ -264,7 +253,7 @@ class PruneComputer(Player):
         # Try each possible move
         for move in valid_moves:
             # Create a copy of current state
-            next_pos = self.convertDirectionToLocation(move)
+            next_pos = self.convertDirectionToLocation(self.x, self.y, move)
 
             # Skip if move leads to immediate collision
             if self.isCollision(move):
@@ -445,7 +434,7 @@ class GenComputer(Player):
         self.strategyGenetic()
 
     def distanceToSelf(self, direction):
-        next_x, next_y = self.convertDirectionToLocation(direction)
+        next_x, next_y = self.convertDirectionToLocation(self.x, self.y, direction)
 
         min_distance = float('inf')
 
@@ -457,7 +446,7 @@ class GenComputer(Player):
         return min_distance
 
     def predictTrap(self, direction):
-        next_x, next_y = self.convertDirectionToLocation(direction)
+        next_x, next_y = self.convertDirectionToLocation(self.x, self.y, direction)
 
         temp_board = self.gameObj.board.copy()
         temp_board.grid[next_y][next_x] = self.ID
@@ -566,7 +555,7 @@ class aStarComputer(Player):
         # Try each possible move
         for move in valid_moves:
             # Create a copy of current state
-            next_pos = self.convertDirectionToLocation(move)
+            next_pos = self.convertDirectionToLocation(self.x, self.y, move)
 
             # Skip if move leads to immediate collision
             if self.isCollision(move):
@@ -886,7 +875,7 @@ class Bot(Player):
         # Try each possible move
         for move in valid_moves:
             # Create a copy of current state
-            next_pos = self.convertDirectionToLocation(move)
+            next_pos = self.convertDirectionToLocation(self.x, self.y, move)
 
             # Skip if move leads to immediate collision
             if self.isCollision(move):
