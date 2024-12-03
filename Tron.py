@@ -1,3 +1,5 @@
+# Authors: Greyson Wintergerst, ... (add your name here if you worked on this file) FIXME
+
 import pygame
 from GameBoard import GameBoard
 from MainMenu import MainMenu
@@ -11,7 +13,7 @@ from GeneticTraining import train_genetic
 from Stats import StatsScreen
 
 
-
+# Game Object that contains the game loop and game state
 class Tron:
     def __init__(self, xTiles, yTiles, tileSize):
 
@@ -94,6 +96,7 @@ class Tron:
         # Start initally at main menu
         self.switchToMenu(self.state)
 
+    # Main event loop for the tron game
     def eventLoop(self):
         clock = pygame.time.Clock()
         active = True
@@ -106,20 +109,18 @@ class Tron:
                 match self.state:
                     case 'MAIN_MENU':
                         self.mainMenu.eventTick(event)
-                        # if event.type == pygame.KEYDOWN and event.key == pygame.K_t: 
-                        #     self.state = 'TRAINING'
                     case 'PLAYING':
-                        print("Playing")
                         self.match.event(event)
                     case 'TRAINING':
-                        self.startDeepTraining()
+                        self.startDeepTraining() # Deep Q-Learning training
                     case 'TRAINING_GENETIC':
-                        self.match.event(event)
+                        self.match.event(event) # Genetic training
                     case 'GAME_OVER':
                         self.gameOverMenu.event(event)
                     case 'STATS_SCREEN':
                         self.statsScreen.event(event)
 
+            # Handle game state transitions
             if self.state == 'MAIN_MENU' or self.state == 'STATS_SCREEN':
                 pass
             if self.state == 'PLAYING':
@@ -142,8 +143,8 @@ class Tron:
         pygame.quit()
         quit()
         
+    # Used during DeepQ Training...Resets the game environment and returns the initial state
     def reset(self, model): 
-        # reset game environment and return initial state
         self.board = GameBoard(self, self.xTiles, self.yTiles, self.tileSize)
         self.players = {
             1: Bot(self, (220, 0, 30), 1, 3, 3, Player.RIGHT),
@@ -153,30 +154,9 @@ class Tron:
         self.state = 'TRAINING'
         return self.getEnvState()
     
-    # def getEnvState(self):
-    #     # return the numerical representation of the game environment
-        
-    #     env_state = []
-    #     for player in self.players.values():
-    #         env_state.extend([player.posX / self.board.xTiles, player.posY / self.board.yTiles, player.direction / 3])
-            
-    #     # calculate a board state, simplifying it to include a 1 if the tile is occupied by a player or wall, 0 otherwise
-    #     obstacle_map = np.zeros((self.board.xTiles, self.board.yTiles))
-    #     for x in range(self.board.xTiles):
-    #         for y in range(self.board.yTiles):
-    #             if self.board.grid[x][y] != 0:
-    #                 obstacle_map[x][y] = 1
-        
-        
-    #     env_state.extend(np.array(obstacle_map).flatten())
-        
-    #     # print(f"Env state, {len(env_state)},  {env_state}")
-        
-        
-    #     return env_state
-    
+    # Used during DeepQ Training...Returns the current state of the game environment as a dictionary
     def getEnvState(self):
-    # Gather player-related state information (scaled positions and directions)
+        # Gather player-related state information (scaled positions and directions)
         players_state = []
         for player in self.players.values():
             players_state.extend([
@@ -192,12 +172,13 @@ class Tron:
                 if self.board.grid[x][y] != 0:
                     obstacle_map[x][y] = 1
 
-        # Return the state as a dictionary for better structure
+        # Return the state as a dictionary
         return {
             "map": obstacle_map,       # 2D array of 0s and 1s
             "player": players_state       # List of player-related state values
         }
         
+    # Used during DeepQ Training...Performs a step in the game environment and returns the next state, rewards, and done flag
     def step(self):
         # perform action for both players
         
@@ -222,11 +203,9 @@ class Tron:
             for player_id, player in self.players.items():
                 if player.alive:
                     opponent = [p for p in self.players.values() if p.ID != player_id][0]
-                    territory = player.calculateDirectionTerritory(player.direction, opponent.direction)
-                    distance_to_wall = player.distanceToClosestWall(player.x, player.y)
+                    territory = player.calculateDirectionTerritory(player.direction, opponent.direction) # Calculate predicted territory
+                    distance_to_wall = player.distanceToClosestWall(player.x, player.y) # Calculate distance to wall
                     rewards[player_id] = 0.5 + 0.0001 * territory + 0.0005 * (distance_to_wall - 10)
-                    # normalize rewards[playerid] to be between -1 and 1
-                    # rewards[player_id] = max(-1, min(1, rewards[player_id]))
 
         # Check if the game is over
         done = not self.match.active
@@ -234,6 +213,8 @@ class Tron:
 
         return next_state, rewards, done
     
+    # Used during DeepQ Training...Starts the Deep Q-Learning training process
+    # Initializes an instance of DeepQAgent with the below parameters
     def startDeepTraining(self):
         print("Starting Deep Q-Learning training")
         state_size = len(self.getEnvState())
@@ -248,11 +229,12 @@ class Tron:
         batch_size = 64
         
         self.deepQAgent = DeepQAgent(self, state_size, action_size, hidden_size, gamma, epsilon, epsilon_min, epsilon_decay, alpha)
-        self.deepQAgent.train(env=self, episodes=episodes, batch_size=batch_size, playerid=2)
+        self.deepQAgent.train(env=self, episodes=episodes, batch_size=batch_size, playerid=2) # makes player 2 the learning bot
         
     
         
 
+    # Redraws the pygame screen to a menu based on the state
     def switchToMenu(self, state):
         self.screen.fill((0, 0, 0))
         self.state = state
@@ -263,6 +245,9 @@ class Tron:
         else:
             self.gameOverMenu.draw()
 
+    # Starts a new match (or displays stats page) based on the match type
+    # Establishes the player and game board
+    # matchType: 0 - PVP, 1 - PVE, 2 - Genetic Training, 3 - Deep Q-Learning Training, 4 - Deep Q-Learning vs. Deep Q-Learning, 5 - Tournament, 6 - Stats
     def startMatch(self, matchType):
         self.board = GameBoard(self, self.xTiles, self.yTiles, self.tileSize)
         self.players = {}
@@ -273,40 +258,48 @@ class Tron:
                                     (pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d))
             self.players[2] = Human(self, (30, 220, 0), 2, self.board.xTiles-4, self.board.yTiles-4,
                                     Player.LEFT, (pygame.K_UP, pygame.K_LEFT, pygame.K_DOWN, pygame.K_RIGHT))
-            # PVE - 1 human and 1 bot
+        # PVE - 1 human and 1 bot 
         elif matchType == 1:
             self.players[1] = Human(self, (220, 0, 30), 1, 3, 3, Player.RIGHT, (
                 pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d))
             self.players[2] = Bot(
-                self, (30, 220, 0), 2, self.board.xTiles-4, self.board.yTiles-4, Player.LEFT)
+                self, (30, 220, 0), 2, self.board.xTiles-4, self.board.yTiles-4, Player.LEFT) # currently defaults to Alpha-Beta Pruning
+            
+        # Genetic Training - 2 bots
         elif matchType == 2:
             self.state = 'TRAINING_GENETIC'
             self.start_training(self)
+            
+        # Deep Q-Learning Training - 1 Territory-Based Bot and 1 Deep Q-Learning Bot
         elif matchType == 3:
             self.state = 'TRAINING'
+            
+        # Player vs. DeepQ - 1 human and 1 Deep Q-Learning Bot
         elif matchType == 4:
-            trainedDeepQ = DeepQAgent(3, self.getEnvState(), 4, 0.95, 1.0, 0.01, 0.995, 0.01)
-            trainedDeepQ.load("deepq_model.pth")
+            trainedDeepQ = DeepQAgent(3, self.getEnvState(), 4, 0.95, 1.0, 0.01, 0.995, 0.01) # Initialize Deep Q-Learning model
+            trainedDeepQ.load("deepq_model.pth") # Load trained Deep Q-Learning model
             self.players[1] = Human(self, (220, 0, 30), 1, 3, 3, Player.RIGHT, (
                 pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d))
             self.players[2] = Bot(self, (90, 220, 50), 2, self.board.xTiles-4, self.board.yTiles-4, Player.LEFT, deepQModel=trainedDeepQ)
-            
             self.match = Match(self, 11)
             self.state = 'PLAYING'
 
-            
+        # Tournament - A series of matches between different bots
         elif matchType == 5:
             self.state = 'PLAYING'
             self.tournament()
+            
+        # Stats - Display the stats screen
         elif matchType == 6:
             self.switchToMenu('STATS_SCREEN')
 
-
+        # Set state to 'PLAYING' for all other match types (for use with tournament logic)
         if (matchType != 2 and matchType != 3 and matchType != 4 and matchType != 5 and matchType != 6):
             # Build match and set program state
             self.match = Match(self, matchType)
             self.state = 'PLAYING'
 
+    # Tournament logic for comparing different bots - FIXME E.S.
     def tournament(self):
         # A star vs Genetic
         for i in range(self.num_tourney_rounds):
@@ -424,7 +417,7 @@ class Tron:
             self.players[1] = aStarComputer(
                 self, (220, 0, 30), 1, 3, 3, Player.RIGHT)
             self.players[2] = Bot(self, (90, 220, 50), 2, self.board.xTiles - 4,
-                                  self.board.yTiles - 4, Player.LEFT, deepQModel=trainedDeepQ)  # FIXME - add Neural Network bot here
+                                  self.board.yTiles - 4, Player.LEFT, deepQModel=trainedDeepQ)
 
             match = Match(self, 8)
             clock = pygame.time.Clock()
@@ -451,7 +444,7 @@ class Tron:
             self.players[1] = PruneComputer(
                 self, (220, 0, 30), 1, 3, 3, Player.RIGHT)
             self.players[2] = Bot(self, (90, 220, 50), 2, self.board.xTiles - 4,
-                                  self.board.yTiles - 4, Player.LEFT, deepQModel=trainedDeepQ)  # FIXME - add Neural Network bot here
+                                  self.board.yTiles - 4, Player.LEFT, deepQModel=trainedDeepQ)
 
             match = Match(self, 9)
             clock = pygame.time.Clock()

@@ -1,3 +1,12 @@
+# Author: Greyson Wintergerst
+# Last Updated: 12/1/2024
+# Purpose: This file contains the DeepQNetwork class and DeepQAgent class. The DeepQNetwork class is a neural network
+#          that is used to approximate the Q-values of the agent in the game. This network uses a combination of convolutional
+#          and dense layers to process the game board and player state inputs.
+#          The DeepQAgent class is the agent that uses the DeepQNetwork to learn the optimal policy for the game. The agent
+#          uses an epsilon-greedy policy to explore the environment and update the Q-values of the network. The agent also
+#          uses experience replay to sample random batches of experiences and train the network on these samples.
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -7,6 +16,7 @@ import random
 from collections import deque
 import json
 
+# Defines the neural network architecture
 class DeepQNetwork(nn.Module):
     def __init__(self, map_shape=(40,40), players_state_size=6, action_size=4):
         super(DeepQNetwork, self).__init__()
@@ -27,7 +37,7 @@ class DeepQNetwork(nn.Module):
         self.fc_combined2 = nn.Linear(128, 128)
         self.fc_output = nn.Linear(128, action_size)
     
-        
+    # Forward pass of the network
     def forward(self, map_input, players_state_input):
         # Convolutional pathway for the map
         x_map = F.relu(self.conv1(map_input))
@@ -46,7 +56,7 @@ class DeepQNetwork(nn.Module):
         
         return x
     
-
+# Defines the agent that uses the DeepQNetwork to learn the optimal policy
 class DeepQAgent:
     def __init__(self, gameObj, state_size, action_size, hidden_size, gamma, epsilon, epsilon_min, epsilon_decay, alpha=0.001):
         self.gameObj = gameObj
@@ -57,26 +67,30 @@ class DeepQAgent:
         self.epsilon = epsilon
         self.epsilon_min = epsilon_min
         self.epsilon_decay = epsilon_decay
-        self.memory = deque(maxlen=5000) # store maximum of 2000 states
-        self.alpha = alpha
+        self.memory = deque(maxlen=5000) # store maximum of 5000 states in "memory"
+        self.alpha = alpha # learning rate
         
         self.model = DeepQNetwork()
-        self.target_model = DeepQNetwork()
-        self.target_model.load_state_dict(self.model.state_dict())
+        self.target_model = DeepQNetwork() # target network for fixed Q-targets
+        self.target_model.load_state_dict(self.model.state_dict()) # initialize target model with the same weights as the model
         
-        self.optimizer = optim.Adam(self.model.parameters(), lr=self.alpha)
-        self.criterion = nn.MSELoss()
+        self.optimizer = optim.Adam(self.model.parameters(), lr=self.alpha) # optimizer for the model
+        self.criterion = nn.MSELoss() # loss function
         
+        # used for storing training metrics
         self.training_metrics = {
             "episode": [],
             "total_reward": [],
             "average_loss": [],
             "epsilon": []
-        }
+        } 
         
+    # Updates the target model with the weights of the learning model
     def update_target_model(self):
         self.target_model.load_state_dict(self.model.state_dict())
         
+    # Chooses an action based on the epsilon-greedy policy
+    # Also considers invalid actions (i.e. actions that result in a collision)
     def act(self, state, playerid=2):
         valid_actions = [
             action for action in range(self.action_size) 
@@ -89,6 +103,7 @@ class DeepQAgent:
         # Exploitation
         return self.predict(state, valid_actions)
     
+    # Returns the action with the highest Q-value
     def predict(self, state, valid_actions):
         map_input = torch.tensor(state["map"], dtype=torch.float32).unsqueeze(0).unsqueeze(0) # add batch and channel dimensions
         players_input = torch.tensor(state["player"], dtype=torch.float32).unsqueeze(0)
@@ -97,63 +112,16 @@ class DeepQAgent:
             q_values = self.model(map_input, players_input).squeeze()
             
         
-        
         for action in range(self.action_size):
             if action not in valid_actions:
                 q_values[action] = -10
-    
-        # print(q_values)
+
                 
         return torch.argmax(q_values).item()
         
-        
-    # def replay(self, batch_size):
-    #     if len(self.memory) < batch_size:
-    #         return
 
-    #     memBatch = random.sample(self.memory, batch_size)
-        
-    #     map_batch = []
-    #     players_batch = []
-    #     target_batch = []
-        
-    #     losses = []
-        
-    #     for state, action, reward, next_state, done in memBatch:
-    #         map_input = torch.tensor(state["map"], dtype=torch.float32).unsqueeze(0).unsqueeze(0) # add batch and channel dimensions
-    #         target = reward
-    #         next_state = torch.tensor(next_state, dtype=torch.float32).unsqueeze(0)
-    #         with torch.no_grad():
-    #             target += self.gamma * torch.max(self.model(next_state)[0]).item()
-    
-    #         current_q = self.model(state)
-    #         target_f = current_q.clone().detach()
-    #         target_f[0][action] = target
-                        
-    #         # print("current_q: ", current_q)
-    #         # print("target_f: ", target_f)
-            
-    #         # Update Q-network
-    #         self.optimizer.zero_grad()
-    #         loss = self.criterion(current_q, target_f)
-    #         loss.backward()
-            
-    #         # Apply gradient clipping
-    #         torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1)
-            
-    #         self.optimizer.step()
-            
-    #         losses.append(loss.item())
-        
-    #     avg_loss = sum(losses) / len(losses)
-    #     print(f"Average Loss: {avg_loss}")
-            
-    #         # print("Loss: ", loss)
-            
-    #     # Decay epsilon - make exploration less likely over time
-    #     if self.epsilon > self.epsilon_min:
-    #         self.epsilon *= self.epsilon_decay
-    
+    # Primary training fucntion for the agent; replays saved memory and updates the model
+    # Returns loss for the batch
     def replay(self, batch_size):
         if len(self.memory) < batch_size:
             return
@@ -169,7 +137,7 @@ class DeepQAgent:
         
         for state, action, reward, next_state, done in memBatch:
             # Prepare current state inputs
-            map_batch.append(torch.tensor(state["map"], dtype=torch.float32))  # Add channel dimension
+            map_batch.append(torch.tensor(state["map"], dtype=torch.float32))
             players_batch.append(torch.tensor(state["player"], dtype=torch.float32))
             
             # Compute the target Q-value
@@ -200,10 +168,8 @@ class DeepQAgent:
         loss = self.criterion(current_q, target_q)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1)
-        # print(f"Loss: {loss.item()}")
-        self.optimizer.step()
 
-        # print(f"Loss: {loss.item()}")
+        self.optimizer.step()
         
         
         
@@ -214,10 +180,12 @@ class DeepQAgent:
         return loss.item()
             
     
+    # Store the current state, action, reward, next state, and done flag in memory
     def remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
         
-    
+        
+    # Training loop that manages overall training process
     def train(self, env, episodes, batch_size, playerid):
         """Train the agent in the given environment."""
         
@@ -226,23 +194,14 @@ class DeepQAgent:
                 self.update_target_model()
                 
             state = env.reset(model=self)
-            
-            map_input = torch.tensor(state["map"], dtype=torch.float32).unsqueeze(0).unsqueeze(0) # Shape [1, 1, 40, 40]
-            players_input = torch.tensor(state["player"], dtype=torch.float32).unsqueeze(0)  # Shape [1, 6]
-            # state = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
             total_reward = 0
             done = False
-            
             losses = []
             
             while not done:
                 action = self.act(state, playerid)
                 next_state, rewards, done = env.step()
-                next_map_input = torch.tensor(next_state["map"], dtype=torch.float32).unsqueeze(0).unsqueeze(0)
-                next_players_input = torch.tensor(next_state["player"], dtype=torch.float32).unsqueeze(0)
-                # next_state = torch.tensor(next_state, dtype=torch.float32).unsqueeze(0)
-                # print(rewards)
-                # print(env.players[1].playerid)
+
                 reward = rewards[playerid]
                 self.remember(
                     {"map": state["map"], "player": state["player"]},
@@ -251,8 +210,7 @@ class DeepQAgent:
                     {"map": next_state["map"], "player": next_state["player"]},
                     done
                 )
-                map_input = next_map_input
-                players_input = next_players_input
+
                 total_reward += reward
                 
                 # Replay experience
@@ -272,13 +230,15 @@ class DeepQAgent:
         self.save_training_metrics()
         print("Training complete. Model saved to deepq_model.pth. Training metrics saved to training_metrics.json")
 
+    # Saves model weights after training
     def save(self, path):
         torch.save(self.model.state_dict(), path)
-        
+    
+    # Loads model weights from a file given a file path
     def load(self, path):
         self.model.load_state_dict(torch.load(path))
         
-        
+    # Saves training metrics to a json file
     def save_training_metrics(self, filename="training_metrics.json"):
         with open(filename, 'w') as f:
             json.dump(self.training_metrics, f)

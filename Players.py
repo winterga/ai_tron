@@ -2,25 +2,24 @@ import pygame
 import random
 import heapq
 
-
+# Parent class that defines several useful functions and characteristics for all players in a given game instance
 class Player:
-
     def __init__(self, gameObj, color, ID, x, y, direction):
-        self.color = color
-        self.ID = ID
-        self.gameObj = gameObj
-        self.x = x
-        self.y = y
-        self.direction = direction
+        self.color = color # color of the player and their trail
+        self.ID = ID # player's ID used for logic in the board/grid implementation
+        self.gameObj = gameObj # reference to a Tron object
+        self.x = x # x-coordinate of the player
+        self.y = y # y-coordinate of the player
+        self.direction = direction # direction the player is moving (UP, RIGHT, DOWN, LEFT)
 
         self.prevPos = (x, y)
         self.alive = True
 
-        self.directionQueue = []
-        self.timeAlive = 0
+        self.directionQueue = [] # queue of directions to move in; created from player input
+        self.timeAlive = 0 # number of ticks that the player has been alive
 		
 
-        self.gameObj.board.grid[y][x] = ID
+        self.gameObj.board.grid[y][x] = ID # set the player's position on the board
 
     # Constants for directions of the player
     UP = 0
@@ -28,6 +27,7 @@ class Player:
     DOWN = 2
     LEFT = 3
 
+    # Function to move the player in the direction they are currently facing
     def movePlayer(self):
         # move player and re-draw GameBoard object
         self.prevPos = (self.x, self.y)
@@ -37,9 +37,7 @@ class Player:
                 self.gameObj.board.grid[self.y - 1][self.x] = self.ID
                 self.y = self.y - 1
             case self.RIGHT:
-
                 self.gameObj.board.grid[self.y][self.x + 1] = self.ID
-
                 self.x = self.x + 1
             case self.DOWN:
                 self.gameObj.board.grid[self.y + 1][self.x] = self.ID
@@ -47,13 +45,15 @@ class Player:
             case self.LEFT:
                 self.gameObj.board.grid[self.y][self.x - 1] = self.ID
                 self.x = self.x - 1
-                
+    
+    # Returns true if the player would collide with itself based on current direction     
     def isInvalidDirection(self, nextDirection):
         return (nextDirection == Player.UP and self.direction == Player.DOWN) or \
                (nextDirection == Player.DOWN and self.direction == Player.UP) or \
                (nextDirection == Player.LEFT and self.direction == Player.RIGHT) or \
                (nextDirection == Player.RIGHT and self.direction == Player.LEFT)
 
+    # Returns true if the player would collide with a wall or a player trail based on a given direction
     def isCollision(self, direction):
         return (direction == Player.UP and self.gameObj.board.isObstacle(self.x, self.y - 1)) or \
             (direction == Player.RIGHT and self.gameObj.board.isObstacle(self.x + 1, self.y)) or \
@@ -61,16 +61,11 @@ class Player:
             (direction == Player.LEFT and self.gameObj.board.isObstacle(
                 self.x - 1, self.y))
 
+    # Sets the player's alive status to False if they have collided with a wall or player trail
     def checkCollision(self, direction):
         if self.isCollision(direction):
             self.alive = False  # kill player
-            
-    def wouldCollideSelf(self, nextDirection):
-        '''Check if the player would collide with their previous position going a particular direction'''
-        return (nextDirection == Player.UP and self.posY-1 == self.prevPos['y']) or \
-			(nextDirection == Player.RIGHT and self.posX+1 == self.prevPos['x']) or \
-			(nextDirection == Player.DOWN and self.posY+1 == self.prevPos['y']) or \
-			(nextDirection == Player.LEFT and self.posX-1 == self.prevPos['x'])
+    
 
     def isCollision(self, direction):
         return (direction == Player.UP and self.gameObj.board.isObstacle(self.x, self.y - 1)) or \
@@ -155,77 +150,6 @@ class Player:
 
     def event(self, event):
         pass
-
-# ----- from DeepQ Merge -----
-
-# class Bot(Player):
-# 	def __init__(self, gameObj, color, playerid, x, y, initialDirection, deepQModel=None):
-# 		super(Bot, self).__init__(gameObj, color, playerid, x, y, initialDirection)
-# 		self.deepQModel = deepQModel
-
-# 	def deepQStrategy(self, gameState):
-# 		state = self.game.getEnvState()
-# 		if gameState == 'TRAINING':
-# 			self.direction = self.deepQModel.act(state, self.playerid)
-# 			# print(self.direction)
-# 		else:
-# 			print("Predicting direction")
-# 			valid_actions = [
-#             action for action in range(4) 
-#             if not self.game.players[self.playerid].wouldCollide(action)
-#         	]
-# 			print(valid_actions)
-# 			self.direction = self.deepQModel.predict(state, valid_actions)
-			
-# 			print("Predicted direction: ", self.direction)
-    
-# 	def tick(self, gameState):
-#         # print("Bot tick")
-#         # print(self.ID)
-# 		if self.deepQModel is None:
-#             # print("No model provided for DeepQStrategy... using most territory strategy")
-# 			self.strategyMostTerritory()
-# 			# self.strategyRandom()
-# 		else:
-# 			self.deepQStrategy(gameState)
-            
-#         ## Put other strategies here
-
-
-# 	def strategyRandom(self):
-# 		dir = list(range(0, 4))
-		
-# 		# 10% chance of changing directions
-# 		if random.randint(1, 10) == 1:
-# 			self.direction = dir[random.randint(0, len(dir)-1)]
-		
-# 		# if we would collide, pick a new random direction
-# 		while dir and self.wouldCollide(self.direction):
-# 			self.direction = dir.pop(random.randint(0, len(dir)-1))
-
-
-
-# 	def strategyMostTerritory(self):
-# 		maxArea = 0
-# 		bestDirection = 0
-
-# 		opponentId = (set(self.game.players)-set([self.playerid])).pop()
-		
-# 		for direction in range(0,4):
-# 			if self.wouldCollide(direction): continue
-
-# 			#generate random direction for opponent (assumes only 2 players)
-# 			a = list(range(0,4))
-# 			opdir = a.pop(random.randint(0, 3))
-# 			while a and self.game.players[opponentId].wouldCollide(opdir):
-# 				opdir = a.pop(random.randint(0, len(a)-1))
-
-# 			area = self.calculateDirectionTerritory(direction, opdir)
-# 			if area > maxArea:
-# 				bestDirection = direction
-# 				maxArea = area
-
-# 		self.direction = bestDirection
 
 class PruneComputer(Player):
     def __init__(self, gameObj, color, ID, x, y, direction):

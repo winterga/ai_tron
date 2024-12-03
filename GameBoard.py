@@ -1,5 +1,8 @@
+# Authors: Greyson Wintergerst, ... (add your name here if you worked on this file) FIXME
+# Description: This file contains the GameBoard class, which is used to represent the tron game board and all objects on it.
 import pygame
 
+# Class to represent the game board
 class GameBoard:
     def __init__(self, gameObj, xTiles, yTiles, tileSize):
         self.gameObj = gameObj
@@ -9,8 +12,6 @@ class GameBoard:
 
         self.grid = [[0 for x in range(xTiles)] for y in range(yTiles)]
 
-
-        ## Possible debugging territory
 
         # Set up board with walls
         for x in range(xTiles):
@@ -22,6 +23,7 @@ class GameBoard:
             self.grid[y][yTiles-1] = -1
 
         
+    # Fundamental function to create objects on the board
     def addRectObstacle(self, x1, y1, x2, y2):
         # Rectagles are defined by the top left and bottom right coordinates
         # Define with two points [top-left] (x1, y1), [bottom-right] (x2, y2)
@@ -32,7 +34,7 @@ class GameBoard:
             self.grid[y][x1] = -1
             self.grid[y][x2] = -1
 
-    
+    # Function that renders all the objects on the board
     def drawGrid(self):
         for i in range(self.xTiles):
             for j in range(self.yTiles):
@@ -54,20 +56,26 @@ class GameBoard:
             
                 pygame.draw.rect(self.gameObj.screen, color=color, rect=(x,y,w,h))
                 
+    
+    # Draws tie indicator onto board at given coordinates (typically place of joint collision)           
     def drawTieSquare(self, x, y):
         pygame.draw.rect(self.gameObj.screen, (0,0,255), (x*self.tileSize,y*self.tileSize+1,self.tileSize+1,self.tileSize))
 
+    # Returns true if a given coordinate is an obstacle (wall or player trail)
     def isObstacle(self, x, y):
         if (x < 0 or x > self.xTiles-1 or y < 0 or y > self.yTiles-1):
             return True
         else:
             return (self.grid[y][x] != 0)
-        
+    
+    # Returns a deep copy of the current board/grid
     def copy(self):
         new_board = GameBoard(self.gameObj, self.xTiles, self.yTiles, self.tileSize)
         new_board.grid = [row[:] for row in self.grid]  # Deep copy of the grid
         return new_board
 
+    # Returns a list of coordinates of the trail of a given player
+    # Coordinates are stored as a tuple
     def getBotTrail(self, playerid):
         trail = []
         for y in range(self.yTiles):
