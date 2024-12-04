@@ -1,3 +1,6 @@
+# Authors: Greyson Wintergerst, ... (add your name here if you worked on this file) FIXME
+# Description: This file contains the GameOverMenu class, which contains all menu logic for the game over screen.
+
 import pygame
 
 class GameOverMenu:
@@ -7,7 +10,7 @@ class GameOverMenu:
 		self.winner = winner
 		self.matchType = matchType
 
-
+	# Handles user input while in the game over menu state
 	def event(self, event):
 		if event.type == pygame.KEYUP:
 			#If enter is pressed switch to the main menu
@@ -15,16 +18,17 @@ class GameOverMenu:
 				self.game.screen.fill((0,0,0))
 				self.game.switchToMenu("MAIN_MENU")
 
-
+	# Draws the pygame screen to display the results of the game
 	def draw(self):
-		#Set base font and text size
+		# Set base font and text size
 		titleFont = pygame.font.SysFont(None, 30)
-		#Set text for game over menu
+		# Set text for game over menu
 		winText = str(self.winner) + " wins!"
 		stats1 = ""
 		stats2 = ""
 		stats3 = ""
 		
+		# Display statistics based on match type
 		if self.matchType == 0:
 			stats1 = "Player 1 Wins: " + str(self.game.PVP_Player1Wins)
 			stats2 = "Player 2 Wins: " + str(self.game.PVP_Player2Wins)
@@ -42,7 +46,7 @@ class GameOverMenu:
 			stats2 = "Bot 2 Wins: " + str(self.game.DqVDq_Dq2Wins)
 			stats3 = "Ties: " + str (self.game.DqVDq_Tie)
 		
-		#Build titles
+		# Build titles
 		title = titleFont.render(winText, 1, (255, 255, 255))
 		title2 = titleFont.render(stats1, 1, (255, 255, 255))
 		title3 = titleFont.render(stats2, 1, (255, 255, 255))
@@ -56,7 +60,7 @@ class GameOverMenu:
 		title5_width = title5.get_rect().width
 		print(stats1 + " " + stats2 + " " + stats3)
 
-		#Draw title/Stats info
+		# Draw title/Stats info
 		self.game.screen.blit(title, ((self.game.scr_x / 2) - (title_width / 2), 120))
 		self.game.screen.blit(title2, ((self.game.scr_x / 2) - (title2_width / 2), 150))
 		self.game.screen.blit(title3, ((self.game.scr_x / 2) - (title3_width / 2), 180))

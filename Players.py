@@ -1,3 +1,13 @@
+# Authors: Greyson Wintergerst, ... (add your name here if you worked on this file) FIXME
+# Description: This file contains the various player classes, which contain all data and logic for active players.
+# The following classes are defined in this file:
+# - Player: Parent class for all player objects
+# - Human: Player object that takes input from the user to make decisions
+# - Bot: Player object that implements several AI strategies (including alpha-beta pruning, DeepQ, random, and territory-based strategies)
+# - PruneComputer: Player object that uses the minimax algorithm with alpha-beta pruning to make decisions
+# - GenComputer: Player object that uses a genetic algorithm to make decisions
+# - aStarComputer: Player object that uses the A* algorithm to make decisions
+
 import pygame
 import random
 import heapq
@@ -66,7 +76,7 @@ class Player:
         if self.isCollision(direction):
             self.alive = False  # kill player
     
-
+    # Returns true if going in a given direction would result in a collision with a wall or player trail
     def isCollision(self, direction):
         return (direction == Player.UP and self.gameObj.board.isObstacle(self.x, self.y - 1)) or \
             (direction == Player.RIGHT and self.gameObj.board.isObstacle(self.x + 1, self.y)) or \
@@ -74,10 +84,7 @@ class Player:
             (direction == Player.LEFT and self.gameObj.board.isObstacle(
                 self.x - 1, self.y))
             
-    def checkCollision(self, direction):
-        if self.isCollision(direction):
-            self.alive = False # kill player
-
+    # Returns the location of the player if they were to move in a given direction
     def convertDirectionToLocation(self, x, y, direction):
         match direction:
             case self.UP:
@@ -89,6 +96,10 @@ class Player:
             case self.LEFT:
                 return (x - 1, y)
             
+    # Returns an estimated number of potential tiles that a player could occupy before their opponent. Uses BFS to calculate territory from a given position by
+    # treating reachable open tiles as components of "layers"
+    #
+    # Credit for this function goes to the original authors, as seen here: https://github.com/nlieb/PyTron/blob/44721c285f3140b80c3f66816701bfc304b15c06/Player.py#L72C66-L72C67
     def calculateDirectionTerritory(self, direction, opponentDirection):
         
         nplayers = len(self.gameObj.players)
@@ -141,7 +152,7 @@ class Player:
             
         return playerTerritory[self.ID-1]
 			
-        
+    # Returns the minimum distance to a wall given a position (x, y)
     def distanceToClosestWall(self, x, y):
         return min(x, y, self.gameObj.board.xTiles - x, self.gameObj.board.yTiles - y)
 
@@ -642,7 +653,7 @@ class aStarComputer(Player):
 
         return len(visited)
 
-
+      
     def neighbors(self, pos):
 	# determines what the valid neighboring positions are
         for direction in range(4):
@@ -723,9 +734,11 @@ class aStarComputer(Player):
 class Bot(Player):
     def __init__(self, gameObj, color, ID, x, y, direction, deepQModel=None):
         super().__init__(gameObj, color, ID, x, y, direction)
-        self.max_depth = 5  # Adjust this to control look-ahead depth
-        self.deepQModel = deepQModel
+        self.max_depth = 5  # Adjust this to control look-ahead depth for the minimax algorithm
+        self.deepQModel = deepQModel # deep Q-learning model for the bot to use
         
+    # Function that handles DeepQ logic for both training and playing phases of the game
+    # Alters the Bot object's direction (self.direction) based on the output of the model. 
     def deepQStrategy(self, gameState):
         state = self.gameObj.getEnvState()
         if gameState == 'TRAINING':
@@ -740,6 +753,7 @@ class Bot(Player):
             self.direction = self.deepQModel.predict(state, valid_actions)
             print("Predicted direction: ", self.direction)
     
+    # Function that alters self.direction randomly at each tick.
     def strategyRandom(self):
         dir = list(range(0, 4))
         
@@ -751,7 +765,9 @@ class Bot(Player):
         while dir and self.isCollision(self.direction):
             self.direction = dir.pop(random.randint(0, len(dir)-1))
             
-    
+    # Function that alters self.direction based on the direction that would result in the most territory for the Bot
+    #
+    # Credit for this function goes to the original authors, as seen here: https://github.com/nlieb/PyTron/blob/44721c285f3140b80c3f66816701bfc304b15c06/Player.py#L209
     def strategyMostTerritory(self):
         maxArea = 0
         bestDirection = 0
@@ -762,7 +778,7 @@ class Bot(Player):
         for direction in range(0,4):
             if self.isCollision(direction): continue
             
-            #generate random direction for opponent (assumes only 2 players)
+            # generate random direction for opponent (assumes only 2 players)
             
             a = list(range(0,4))
             opdir = a.pop(random.randint(0, 3))
@@ -776,10 +792,11 @@ class Bot(Player):
                 
         self.direction = bestDirection
 
+    # Implements Bot action at each step of the game
     def tick(self):
         if self.deepQModel is None:
-            if self.gameObj.state == 'TRAINING':
-                self.strategyMostTerritory()
+            if self.gameObj.state == 'TRAINING': # training DeepQ model
+                self.strategyMostTerritory() # strategy for opponent in DeepQ Training
             else:
                 best_move = self.decision()
                 if best_move is not None:
@@ -787,6 +804,7 @@ class Bot(Player):
         else:
             self.deepQStrategy(self.gameObj.state)
 
+    # Function that determines the best move for the Bot using the minimax algorithm
     def decision(self):
         best_value = float('-inf')
         best_move = None

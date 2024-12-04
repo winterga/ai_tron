@@ -1,3 +1,6 @@
+# Authors: Greyson Wintergerst, ... (add your name here if you worked on this file) FIXME
+# Description: This file contains the MainMenu class, which contains all menu logic for the main menu screen.
+
 import pygame
 
 class MainMenu:
@@ -31,17 +34,18 @@ class MainMenu:
 
 			self.items.append([item, text_surface, (width, height), (posx, posy)])
 
+	# Handles user input while in the MAIN_MENU state
 	def eventTick(self, event):
 		if event.type == pygame.KEYDOWN: #change the active menu entry
 			prevActive = self.activeItem 
 			
-			#change the current active item. Use modular arithmatic to loop around the list.
+			# Change the current active item based on the key pressed
 			if event.key == pygame.K_UP:
 				self.activeItem = ((self.activeItem-1) % len(self.items))
 			elif event.key == pygame.K_DOWN:
 				self.activeItem = ((self.activeItem+1) % len(self.items))
 			
-			#if we changed active entries, redraw the new active entry in blue and redraw the old one in black
+			# If the active item has changed, update the colors of the text objects
 			if prevActive != self.activeItem: 
 				self.items[self.activeItem][1] = self.font.render(self.items[self.activeItem][0], 1, self.activeColor)
 				self.items[prevActive][1] = self.font.render(self.items[prevActive][0], 1, self.inactiveColor)
@@ -54,28 +58,29 @@ class MainMenu:
 			elif event.key == pygame.K_RETURN:
 				self.game.startMatch(self.activeItem) #match type is equal to the element's ID
 
+	# Draws the pygame screen to display the main menu
 	def draw(self):
      
 		
-		#Build title text
+		# Build title text
 		titleFont = pygame.font.SysFont('magneto', 80)
 		title = titleFont.render("IntelliTron", 1, (255, 255, 255))
 		title_width = title.get_rect().width
 		title_height = title.get_rect().height
   
-		# draw tron bike image
+		# Draw tron bike image
 		bike_img = pygame.image.load('tron_bike.png')
 		bike_img = pygame.transform.scale(bike_img, (self.game.scr_x/1.25, 5*title_height))
 		bike_width = bike_img.get_rect().width
 		bike_height = bike_img.get_rect().height
 		self.game.screen.blit(bike_img, (0, title_height-20))
   
-		#draw title
+		# Draw title
 		self.game.screen.blit(title, ((self.game.scr_x / 2) - (title_width / 2), 60))
   
 
 		
   
-		#draw selectable menu options
+		# Draw selectable menu options
 		for name, label, (width, height), (posx, posy) in self.items:
                 	self.game.screen.blit(label, (posx, posy))

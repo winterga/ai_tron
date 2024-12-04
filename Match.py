@@ -8,8 +8,7 @@ class Match:
         self.gameMode = gameMode
 
     def tick(self):
-        # get next move
-        # print(self.gameObj.state)
+        # get next move for each player
         for player in self.gameObj.players:
             self.gameObj.players[player].tick()
             self.gameObj.players[player].timeAlive += 1
