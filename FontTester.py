@@ -2,6 +2,7 @@
 # Description: This file contains a script that renders all the fonts available in pygame and saves them as images in the font_samples directory.
 #              This script is useful for selecting a font in the game and testing how it looks.
 #              To use this script, run it and check the font_samples directory for the images.
+
 import pygame
 import os
 

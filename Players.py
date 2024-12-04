@@ -1,3 +1,13 @@
+# Authors: Greyson Wintergerst, ... (add your name here if you worked on this file) FIXME
+# Description: This file contains the various player classes, which contain all data and logic for active players.
+# The following classes are defined in this file:
+# - Player: Parent class for all player objects
+# - Human: Player object that takes input from the user to make decisions
+# - Bot: Player object that implements several AI strategies (including alpha-beta pruning, DeepQ, random, and territory-based strategies)
+# - PruneComputer: Player object that uses the minimax algorithm with alpha-beta pruning to make decisions
+# - GenComputer: Player object that uses a genetic algorithm to make decisions
+# - aStarComputer: Player object that uses the A* algorithm to make decisions
+
 import pygame
 import random
 import heapq
