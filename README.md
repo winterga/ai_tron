@@ -4,14 +4,39 @@ Development of AI tron bot algorithms, including a demo visualization.
 # Requirements
 Python: `python3.11.8` was used to demo and develop this project. Use >= `python3.11` for the best, tested experience.
 
-Run `pip install -r requirements.txt` to install necessary project dependencies.
+### For pip users: 
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/winterga/ai_tron.git
+   cd ai_tron```
+2. Run `pip install -r requirements.txt` to install necessary project dependencies.
 
-# How to Play.
-After cloning the repository, navigate to the main directory of the project, `ai_tron`. 
+### For Anaconda users:
+#### Setting up the Environment
+1. Install [Miniconda](https://docs.conda.io/en/latest/miniconda.html) or [Anaconda](https://www.anaconda.com/).
+2. Clone this repository:
+   ```bash
+   git clone https://github.com/winterga/ai_tron.git
+   cd ai_tron```
+3. Run `conda env create -f environment.yml`
+4. Activate the environment: `conda activate intellitron`
+
+
+# How to Play
+After cloning the repository and setting up the environment, navigate to the main directory of the project, `ai_tron`. 
 Simply run `python Tron.py` to start the game loop. Options for playing can be chosen through the Main Menu.
 Navigate with the arrow keys and press `[Enter]` on the highlighted option to access that menu choice.
 
-### Credit
+Player vs. Player option: Player 1 uses WASD to control their bike. Player 2 uses arrow keys.
+All other active match options: Human player starts in top left and uses WASD to control their bike. Bot/AI starts in bottom right.
+
+# Notes on Training
+No datasets are required for training any of the models implemented in this repository. Genetic algorithm weights for the fitness function... FIXME E.S.
+
+The current trained model parameters have been saved to `deepq_model.pth`. Clicking on the "Train AI w/ DeepQ" option in the main menu will train the model
+for 50 epochs/episodes (can be changed in the `startDeepTraining` function in `Tron.py`; see `episodes=50`).
+
+# Credit
 Authors: Greyson Wintergerst, ...
 Last Updated: December 6th, 2024
 
