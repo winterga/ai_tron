@@ -465,7 +465,7 @@ class aStarComputer(Player):
     def __init__(self, gameObj, color, ID, x, y, direction):
         super().__init__(gameObj, color, ID, x, y, direction)
         self.max_depth = 5  # Adjust this to control look-ahead depth
-	    
+
     def tick(self):
         best_move = self.decision()
         if best_move is not None:
@@ -649,75 +649,78 @@ class aStarComputer(Player):
 
         return len(visited)
 
-    # FIXME: comments needed
+      
     def neighbors(self, pos):
+	# determines what the valid neighboring positions are
         for direction in range(4):
             nX, nY = self.directionToNextLocation(nX, nY, direction)
             if self.isValidMove(nX, nY):
-                print(f"Neighbor: {(nX, nY)}, Direction: {direction}")
                 yield nX, nY, direction
-
+	
     def heuristic(self, x, y):
+	# Manhattan distance calculation
         target = self.findLargestSafeArea()
         return abs(target[0] - x) + abs(target[1] - y)
 
     def strategyAStar(self):
+	# AStar Search Strategy
         print("Starting A*")
-        open_set = []
+        open_set = [] 
         start = (self.x, self.y)
-        # (priority, cost, position, direction)
+        # heap order: (priority, cost, position, direction)
         heapq.heappush(open_set, (0, 0, start, None))
-        came_from = {}
-        cost_so_far = {start: 0}
+        came_from = {} # dictionary: store path taken
+        cost_so_far = {start: 0} # dictionary: store cost
         goal = None
 
-        while open_set:
-            _, current_cost, current, current_dir = heapq.heappop(open_set)
+        while open_set: # go through open set until it's over
+            _, current_cost, current, current_dir = heapq.heappop(open_set) # pop position with the lowest priority (best option)
             print(f"Current: {current}, Cost: {current_cost}")
-
-            if self.isSafeGoal(current):
+	
+            if self.isSafeGoal(current): # current meet criteria?
                 goal = current
                 print(f"Goal found: {goal}")
                 break
 
-            for nX, nY, direction in self.neighbors(current):
+            for nX, nY, direction in self.neighbors(current): # generate the valid neigbor list with neighbor function
                 next_pos = (nX, nY)
                 new_cost = current_cost + 1
 
-                if next_pos not in cost_so_far or new_cost < cost_so_far[next_pos]:
+                if next_pos not in cost_so_far or new_cost < cost_so_far[next_pos]: # 1. hasn't been visited or 2. cheper path found
                     cost_so_far[next_pos] = new_cost
-                    priority = new_cost + self.heuristic(nX, nY)
+                    priority = new_cost + self.heuristic(nX, nY) # calc priority = cost so far + estimated cost (heuristic)
                     heapq.heappush(
-                        open_set, (priority, new_cost, next_pos, direction))
-                    came_from[next_pos] = (current, direction)
+                        open_set, (priority, new_cost, next_pos, direction)) # add neighbor to set
+                    came_from[next_pos] = (current, direction) # record path
 
-        if goal:
+        if goal: # goal found? reconstruct
             print(f"Path to goal found. Goal: {goal}")
             current = goal
-            while came_from[current][0] != start:
+            while came_from[current][0] != start: # backtrack
                 current = came_from[current][0]
             self.direction = came_from[current][1]
             print(f"Next direction: {self.direction}")
-        else:
+        else: # no goal found
             print("No path found")
 
-    def isSafeGoal(self, pos):
+    def isSafeGoal(self, pos): # make sure next move is valid, also helps with debugging
         x, y = pos
         result = self.isValidMove(x, y)
         print(f"Checking if position {pos} is a safe goal: {result}")
         return result
 
     def findLargestSafeArea(self):
-        largest_area = None
-        largest_size = 0
-
+        largest_area = None # coordinates of largest area
+        largest_size = 0 # size of largest area
+	    
+	# iterate through
         for x in range(self.gameObj.board.xTiles):
             for y in range(self.gameObj.board.yTiles):
-                if not self.gameObj.board.isObstacle(x, y):
-                    # Count adjacent free spaces
+                if not self.gameObj.board.isObstacle(x, y): # make sure current is not an obstacle
+                    # count adjacent free spaces
                     size = sum([1 for nx, ny, _ in self.neighbors(
                         (x, y)) if not self.gameObj.board.isObstacle(nx, ny)])
-                    if size > largest_size:
+                    if size > largest_size: # update largest_area & largest_size if found
                         largest_size = size
                         largest_area = (x, y)
 
