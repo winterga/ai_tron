@@ -466,10 +466,6 @@ class aStarComputer(Player):
         super().__init__(gameObj, color, ID, x, y, direction)
         self.max_depth = 5  # Adjust this to control look-ahead depth
 
-    def deepQStrategy(self):
-	# determine direction
-        return random.choice([Player.UP, Player.RIGHT, Player.DOWN, Player.LEFT])
-	
     def tick(self):
         best_move = self.decision()
         if best_move is not None:
