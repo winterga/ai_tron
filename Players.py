@@ -1,4 +1,4 @@
-# Authors: Greyson Wintergerst, Debanjan Chakraborti... (add your name here if you worked on this file) FIXME
+# Authors: Greyson Wintergerst, Eileen Hsu, Debanjan Chakraborti... (add your name here if you worked on this file) FIXME
 # Description: This file contains the various player classes, which contain all data and logic for active players.
 # The following classes are defined in this file:
 # - Player: Parent class for all player objects
@@ -339,7 +339,7 @@ class PruneComputer(Player):
 
         return len(visited)
 
-
+# Define events for a human player
 class Human(Player):
     def __init__(self, gameObj, color, ID, x, y, direction, keybinds):
         super().__init__(gameObj, color, ID, x, y, direction)
@@ -356,7 +356,6 @@ class Human(Player):
             else:
                 self.direction = self.directionQueue.pop(0)
 
-            # why do we need this again? #FIXME
             self.prevPos = (self.x, self.y)
 
     def event(self, event):
@@ -370,7 +369,7 @@ class Human(Player):
             elif event.key == self.p_right:
                 self.directionQueue.append(Player.RIGHT)
 
-
+# Define ticks/events for a computer operating based on genetic algorithm
 class GenComputer(Player):
     def __init__(self, gameObj, color, ID, x, y, direction, genome):
         super(GenComputer, self).__init__(gameObj, color, ID, x, y, direction)
@@ -379,19 +378,7 @@ class GenComputer(Player):
     def tick(self):
         self.strategyGenetic()
 
-    def distanceToSelf(self, direction):
-        next_x, next_y = self.convertDirectionToLocation(
-            self.x, self.y, direction)
-
-        min_distance = float('inf')
-
-        for point in self.gameObj.board.getBotTrail(self.ID):
-            trail_x, trail_y = point
-            distance = abs(next_x - trail_x) + abs(next_y - trail_y)
-            min_distance = min(min_distance, distance)
-
-        return min_distance
-
+    # based on the hypothetical next move, determines whether or not the agent will be entrapped in an area < 50 blocks
     def predictTrap(self, direction):
         next_x, next_y = self.convertDirectionToLocation(
             self.x, self.y, direction)
@@ -404,8 +391,9 @@ class GenComputer(Player):
 
         trap_threshold = 50
 
-        return reachable_area < trap_threshold
+        return reachable_area, reachable_area < trap_threshold
 
+    # given a current location and board state, calculate how many blocks the agent can reach
     def calculateReachableArea(self, x, y, board):
         visited = set()
         queue = [(x, y)]
@@ -431,39 +419,43 @@ class GenComputer(Player):
 
         return reachable_count
 
+    # the strategy the computer uses to choose its next move based on a genome and the board state
     def strategyGenetic(self):
         max_score = -float('inf')
         best_direction = None
         opponentId = (set(self.gameObj.players) - {self.ID}).pop()
 
+        # checks all 4 possible actions/directions to choose from
         for direction in range(4):
+            # if the direction chosen leads to immediate death or being trapped in an area of < 50 blocks, we skip checking it
             if self.isCollision(direction):
                 continue
-
-            if self.predictTrap(direction):
+            reachable_area, is_trap = self.predictTrap(direction)
+            if is_trap:
                 continue
 
-            max_attempts = 10
+            # predict a valid move from the opponent (valid if it does not cause the opponent's immediate death)
+            max_attempts = 4
             attempts = 0
             opponent_direction = random.choice(range(4))
             while self.gameObj.players[opponentId].isCollision(opponent_direction) and attempts < max_attempts:
                 opponent_direction = random.choice(range(4))
                 attempts += 1
 
+            # default to UP if the opponent has no valid moves
             if attempts >= max_attempts:
                 opponent_direction = Player.UP
 
-            distance_to_self = self.distanceToSelf(direction)
-            survival = 1 if not self.isCollision(direction) else 0
-            self_collision_penalty = -10 / (distance_to_self + 1)
+            # calculate a score for the proposed action based on survival and aggression weights
+            survival = reachable_area
             aggression = -abs(direction - opponent_direction)
 
             score = (
                 self.genome[0] * survival +
-                self.genome[1] * aggression +
-                self_collision_penalty
+                self.genome[1] * aggression * 50
             )
 
+            # if the score if better than the current maximum score, we update our choice to the proposed action
             if score > max_score:
                 max_score = score
                 best_direction = direction

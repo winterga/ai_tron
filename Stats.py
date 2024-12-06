@@ -1,3 +1,5 @@
+# Author: Eileen Hsu
+# Description: This file contains the StatsScreen class, which displays the win stats of the current game session.
 import pygame
 
 class StatsScreen:
@@ -8,13 +10,13 @@ class StatsScreen:
         self.font_instructions = pygame.font.SysFont('Arial', 20, True)
 
     def draw(self):
-        # Clear the screen
-        self.game.screen.fill((0, 0, 0))  # Black background
+        self.game.screen.fill((0, 0, 0))
 
         # Title
         title_surface = self.font_title.render("Game Statistics", True, (255, 255, 255))  # White text
         self.game.screen.blit(title_surface, (self.game.scr_x // 2 - title_surface.get_width() // 2, 20))
 
+        # Calculating average time survived by each algorithm
         AStar_avgtime = 0
         AB_avgtime = 0
         Genetic_avgtime = 0
@@ -38,7 +40,7 @@ class StatsScreen:
         if len(self.game.NNTimes) > 0:
             NN_avgtime = round(NN_avgtime / len(self.game.NNTimes), 2)
 
-        # Stats data
+        # Stats data to be displayed on the screen
         stats = [
             f"PVE Player Wins: {self.game.PVE_PlayerWins}",
             f"PVE Bot Wins: {self.game.PVE_BotWins}",
@@ -70,27 +72,24 @@ class StatsScreen:
             f"NN Avg Time Survived: {NN_avgtime} ticks"
         ]
 
-        # Split stats into two columns
+        # Positioning and rendering the data
         mid_index = len(stats) // 2
         column_1 = stats[:mid_index]
         column_2 = stats[mid_index:]
 
-        # Starting positions
         start_y = 100
         line_spacing = 30
         column_1_x = 50
         column_2_x = self.game.scr_x // 2 + 25
 
-        # Render column 1
         for i, stat in enumerate(column_1):
             y_position = start_y + i * line_spacing
-            stat_surface = self.font_stats.render(stat, True, (200, 200, 200))  # Light gray text
+            stat_surface = self.font_stats.render(stat, True, (200, 200, 200))
             self.game.screen.blit(stat_surface, (column_1_x, y_position))
 
-        # Render column 2
         for i, stat in enumerate(column_2):
             y_position = start_y + i * line_spacing
-            stat_surface = self.font_stats.render(stat, True, (200, 200, 200))  # Light gray text
+            stat_surface = self.font_stats.render(stat, True, (200, 200, 200))
             self.game.screen.blit(stat_surface, (column_2_x, y_position))
 
         # Instructions to return to the main menu
@@ -104,6 +103,7 @@ class StatsScreen:
 
         pygame.display.flip()
 
+    # Listens for esc key being pressed to return to main menu
     def event(self, event):
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-            self.game.switchToMenu("MAIN_MENU")  # Return to the main menu
+            self.game.switchToMenu("MAIN_MENU")

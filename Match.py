@@ -1,5 +1,7 @@
+# Author: Eileen Hsu
+# Description: This file contains the Match class, which implements logic for handling gameplay mechanisms.
+
 from GameOverMenu import GameOverMenu
-import pygame
 
 class Match:
     def __init__(self, gameObj, gameMode):
@@ -13,16 +15,14 @@ class Match:
             self.gameObj.players[player].tick()
             self.gameObj.players[player].timeAlive += 1
 
-        # check if they collide with each at same time
+        # check if they collide with each other at the same time
         if self.checkTie():
             self.checkStatus(True)
             return
 
         # check for any other collision situations and update positions
         for player in self.gameObj.players:
-
             self.gameObj.players[player].checkCollision(self.gameObj.players[player].direction)
-
             self.gameObj.players[player].movePlayer()
             
         # check if anyone is dead
@@ -37,6 +37,7 @@ class Match:
         for player in self.gameObj.players:
             self.gameObj.players[player].event(event)
 
+    # check the next positions of both players; if they are the same, draw a tie square for visualization
     def checkTie(self):
         nextPositions = []
         for player in self.gameObj.players:
@@ -54,6 +55,7 @@ class Match:
                 nextPositions.append(nextPosition)
         return False
 
+    # check if any players are dead and if so, update stats and transition to game-over menu
     def checkStatus(self, tieStatus):
         aliveCount = 0
 
@@ -66,6 +68,7 @@ class Match:
 
             self.active = False
             print("Tie detected or no players alive.")
+            # Update stats depending on the game mode
             if self.gameMode == 1:
                 self.gameObj.PVE_Tie += 1
             elif self.gameMode == 0:
@@ -101,7 +104,8 @@ class Match:
                 if self.gameObj.players[player].alive:
                     winner = player
                     break
-
+            
+            # update stats based on game mode
             if self.gameMode == 1:
                 if winner == 1:
                     self.gameObj.PVE_PlayerWins += 1

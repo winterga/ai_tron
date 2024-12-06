@@ -1,4 +1,4 @@
-# Authors: Greyson Wintergerst, ... (add your name here if you worked on this file) FIXME
+# Authors: Greyson Wintergerst, Eileen Hsu, ... (add your name here if you worked on this file) FIXME
 
 import pygame
 from GameBoard import GameBoard
@@ -306,7 +306,6 @@ class Tron:
             self.board = GameBoard(
                 self, self.xTiles, self.yTiles, self.tileSize)
             self.players = {}
-            # FIXME - add A star bot here
             self.players[1] = aStarComputer(  # added astar
                 self, (220, 0, 30), 1, 3, 3, Player.RIGHT)
             self.players[2] = GenComputer(
@@ -333,7 +332,6 @@ class Tron:
             self.board = GameBoard(
                 self, self.xTiles, self.yTiles, self.tileSize)
             self.players = {}
-            # FIXME - add Alpha-Beta bot here
             self.players[1] = PruneComputer(
                 self, (220, 0, 30), 1, 3, 3, Player.RIGHT)
             self.players[2] = GenComputer(
@@ -358,7 +356,6 @@ class Tron:
             self.board = GameBoard(
                 self, self.xTiles, self.yTiles, self.tileSize)
             self.players = {}
-            # FIXME - add Neural Network bot here
             trainedDeepQ = DeepQAgent(3, self.getEnvState(), 4, 0.95, 1.0, 0.01, 0.995, 0.01)
             trainedDeepQ.load("deepq_model.pth")
             self.players[1] = Bot(self, (220, 0, 30), 1, 3, 3, Player.RIGHT, deepQModel=trainedDeepQ)
@@ -384,7 +381,6 @@ class Tron:
             self.board = GameBoard(
                 self, self.xTiles, self.yTiles, self.tileSize)
             self.players = {}
-            # FIXME - add A star bot here
             self.players[1] = aStarComputer(
                 self, (220, 0, 30), 1, 3, 3, Player.RIGHT)
             self.players[2] = PruneComputer(self, (90, 220, 50), 2, self.board.xTiles - 4,
@@ -411,7 +407,6 @@ class Tron:
             self.board = GameBoard(
                 self, self.xTiles, self.yTiles, self.tileSize)
             self.players = {}
-            # FIXME - add A star bot here
             trainedDeepQ = DeepQAgent(3, self.getEnvState(), 4, 0.95, 1.0, 0.01, 0.995, 0.01)
             trainedDeepQ.load("deepq_model.pth")
             self.players[1] = aStarComputer(
@@ -438,7 +433,6 @@ class Tron:
             self.board = GameBoard(
                 self, self.xTiles, self.yTiles, self.tileSize)
             self.players = {}
-            # FIXME - add Alpha-Beta bot here
             trainedDeepQ = DeepQAgent(3, self.getEnvState(), 4, 0.95, 1.0, 0.01, 0.995, 0.01)
             trainedDeepQ.load("deepq_model.pth")
             self.players[1] = PruneComputer(
@@ -460,6 +454,7 @@ class Tron:
             self.ABTimes.append(ticks)
             self.NNTimes.append(ticks)
 
+    # Initializes a population with 20 random genomes and starts the process for training the genetic algorithm
     def start_training(self, tron):
         initial_population = [[random.random() for _ in range(2)]
                               for _ in range(20)]
@@ -479,6 +474,9 @@ class Tron:
         self.screen.fill((0, 0, 0))
         self.switchToMenu("MAIN_MENU")
 
+    # Simulates a match between 2 agents using the genetic algorithm. One agent uses genome1 and the other uses genome2. 
+    # Returns the survival time of the agent using genome1 (the genome being evaluated), whether the agent won or lost,
+    # the state of the agent and the board at the end of the game.
     def simulate_genetic(self, genome1, genome2):
         self.board = GameBoard(self, self.xTiles, self.yTiles, self.tileSize)
         self.players = {}
