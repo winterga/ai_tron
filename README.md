@@ -35,9 +35,10 @@ No datasets are required for training any of the models implemented in this repo
 
 The current trained model parameters have been saved to `deepq_model.pth`. Clicking on the "Train AI w/ DeepQ" option in the main menu will train the model
 for 50 epochs/episodes (can be changed in the `startDeepTraining` function in `Tron.py`; see `episodes=50`).
+The current trained model parameters for the genetic algorithm have been saved in the Tron class as `best_genome`. Optionally, clicking on the "Train AI w Genetic Algorithm" option in the main menu will train the model for 50 generations (20 games per generation) and overwrite the current best_genome with the newly trained results (parameters can be changed in the `start_training` function in `Tron.py` but may lead to inconsistent results).
 
 # Credit
-Authors: Greyson Wintergerst, ...
+Authors: Greyson Wintergerst, Eileen Hsu, ...
 Last Updated: December 6th, 2024
 
 This project took inspiration from the following repository: https://github.com/nlieb/PyTron.

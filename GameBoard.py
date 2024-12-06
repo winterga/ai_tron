@@ -1,4 +1,4 @@
-# Authors: Greyson Wintergerst, ... (add your name here if you worked on this file) FIXME
+# Authors: Greyson Wintergerst, Eileen Hsu, ... (add your name here if you worked on this file) FIXME
 # Description: This file contains the GameBoard class, which is used to represent the tron game board and all objects on it.
 import pygame
 
@@ -73,13 +73,3 @@ class GameBoard:
         new_board = GameBoard(self.gameObj, self.xTiles, self.yTiles, self.tileSize)
         new_board.grid = [row[:] for row in self.grid]  # Deep copy of the grid
         return new_board
-
-    # Returns a list of coordinates of the trail of a given player
-    # Coordinates are stored as a tuple
-    def getBotTrail(self, playerid):
-        trail = []
-        for y in range(self.yTiles):
-            for x in range(self.xTiles):
-                if self.grid[y][x] == playerid:
-                    trail.append((x, y))
-        return trail
