@@ -1,4 +1,4 @@
-# Authors: Greyson Wintergerst, ... (add your name here if you worked on this file) FIXME
+# Authors: Greyson Wintergerst
 # Description: This file contains the MainMenu class, which contains all menu logic for the main menu screen.
 
 import pygame

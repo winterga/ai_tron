@@ -1,4 +1,5 @@
-# Authors: Greyson Wintergerst, Eileen Hsu, ... (add your name here if you worked on this file) FIXME
+# Authors: Greyson Wintergerst and Eileen Hsu
+# Description: This file contains the Tron class, which implements the main game loop and game state logic.
 
 import pygame
 from GameBoard import GameBoard

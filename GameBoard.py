@@ -1,4 +1,4 @@
-# Authors: Greyson Wintergerst, Eileen Hsu, ... (add your name here if you worked on this file) FIXME
+# Authors: Greyson Wintergerst and Eileen Hsu
 # Description: This file contains the GameBoard class, which is used to represent the tron game board and all objects on it.
 import pygame
 

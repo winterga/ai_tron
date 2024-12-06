@@ -1,4 +1,4 @@
-# Authors: Greyson Wintergerst, Eileen Hsu, Debanjan Chakraborti... (add your name here if you worked on this file) FIXME
+# Authors: Greyson Wintergerst, Eileen Hsu, Debanjan Chakraborti, and Astha Sinha
 # Description: This file contains the various player classes, which contain all data and logic for active players.
 # The following classes are defined in this file:
 # - Player: Parent class for all player objects
@@ -722,7 +722,7 @@ class aStarComputer(Player):
         largest_area = None  # coordinates of largest area
         largest_size = 0  # size of largest area
 
-        # iterate through
+        # iterate through grid
         for x in range(self.gameObj.board.xTiles):
             for y in range(self.gameObj.board.yTiles):
                 # make sure current is not an obstacle
