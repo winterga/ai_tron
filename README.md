@@ -8,7 +8,7 @@ Python: `python3.11.8` was used to demo and develop this project. Use >= `python
 1. Clone this repository:
    ```bash
    git clone https://github.com/winterga/ai_tron.git
-   cd ai_tron```
+   cd ai_tron
 2. Run `pip install -r requirements.txt` to install necessary project dependencies.
 
 ### For Anaconda users:
@@ -17,7 +17,7 @@ Python: `python3.11.8` was used to demo and develop this project. Use >= `python
 2. Clone this repository:
    ```bash
    git clone https://github.com/winterga/ai_tron.git
-   cd ai_tron```
+   cd ai_tron
 3. Run `conda env create -f environment.yml`
 4. Activate the environment: `conda activate intellitron`
 
