@@ -89,7 +89,7 @@ class Tron:
 
         self.best_genome = [0.42430839081823557, 0.6795954452427644]
 
-        self.num_tourney_rounds = 10
+        self.num_tourney_rounds = 30
 
         self.statsScreen = StatsScreen(self)
 

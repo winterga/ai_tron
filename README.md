@@ -30,6 +30,8 @@ Navigate with the arrow keys and press `[Enter]` on the highlighted option to ac
 Player vs. Player option: Player 1 uses WASD to control their bike. Player 2 uses arrow keys.
 All other active match options: Human player starts in top left and uses WASD to control their bike. Bot/AI starts in bottom right.
 
+Tournament option: The tournament will simulate games between all pairs of algorithms. The number of games it will simulate for each pairing can be changed in the Tron class by modifying `num_tourney_rounds` (line 92 in Tron.py). Currently, it is set to run for 30 games per pairing.
+
 # Notes on Training
 No datasets are required for training any of the models implemented in this repository. Genetic algorithm weights for the fitness function... FIXME E.S.
 
