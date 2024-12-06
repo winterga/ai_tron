@@ -1,4 +1,4 @@
-# Authors: Greyson Wintergerst, ... (add your name here if you worked on this file) FIXME
+# Authors: Greyson Wintergerst, Debanjan Chakraborti... (add your name here if you worked on this file) FIXME
 # Description: This file contains the various player classes, which contain all data and logic for active players.
 # The following classes are defined in this file:
 # - Player: Parent class for all player objects
@@ -300,25 +300,25 @@ class PruneComputer(Player):
         if self.is_position_blocked(my_pos) or self.is_position_blocked(op_pos):
             return True
 
-        my_moves = self.get_valid_moves_for_position(my_pos)
+        bot_moves = self.get_valid_moves_for_position(my_pos)
         op_moves = self.get_valid_moves_for_position(op_pos)
 
-        return len(my_moves) == 0 or len(op_moves) == 0
+        return len(bot_moves) == 0 or len(op_moves) == 0
 
     def evaluate_state(self, my_pos, op_pos):
-        my_moves = len(self.get_valid_moves_for_position(my_pos))
+        bot_moves = len(self.get_valid_moves_for_position(my_pos))
         op_moves = len(self.get_valid_moves_for_position(op_pos))
 
         if op_moves == 0:
             return float('inf')   # won
-        if my_moves == 0:
+        if bot_moves == 0:
             return float('-inf')  # lost
 
         # Calculate available space
         op_space = self.flood_fill_count(op_pos)
-        my_space = self.flood_fill_count(my_pos)
+        bot_space = self.flood_fill_count(my_pos)
         # Score is based on available space and moves, moves are weighed more heavily here (as indicated by the x10)
-        return (my_moves * 10 + my_space) - (op_moves * 10 + op_space)
+        return (bot_moves * 10 + bot_space) - (op_moves * 10 + op_space)
     # Counts the available spaces
 
     def flood_fill_count(self, start_pos):
