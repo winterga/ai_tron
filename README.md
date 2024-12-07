@@ -1,4 +1,4 @@
-# ai_tron
+# ai_tron (IntelliTRON)
 Development of AI tron bot algorithms, including a demo visualization. 
 
 # Requirements
