@@ -41,6 +41,7 @@ The current trained model parameters for the genetic algorithm have been saved i
 
 # Credit
 Authors: Greyson Wintergerst, Eileen Hsu, Debanjan Chakraborti, and Astha Sinha
+
 Last Updated: December 6th, 2024
 
 This project took inspiration from the following repository: https://github.com/nlieb/PyTron.
