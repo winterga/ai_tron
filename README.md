@@ -33,7 +33,7 @@ All other active match options: Human player starts in top left and uses WASD to
 Tournament option: The tournament will simulate games between all pairs of algorithms. The number of games it will simulate for each pairing can be changed in the Tron class by modifying `num_tourney_rounds` (line 93 in Tron.py). Currently, it is set to run for 30 games per pairing.
 
 # Notes on Training
-No datasets are required for training any of the models implemented in this repository. Genetic algorithm weights for the fitness function... FIXME E.S.
+No datasets are required for training any of the models implemented in this repository.
 
 The current trained model parameters have been saved to `deepq_model.pth`. Clicking on the "Train AI w/ DeepQ" option in the main menu will train the model
 for 50 epochs/episodes (can be changed in the `startDeepTraining` function in `Tron.py`; see `episodes=50`).
