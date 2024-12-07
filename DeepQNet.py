@@ -146,9 +146,8 @@ class DeepQAgent:
                 next_map_input = torch.tensor(next_state["map"], dtype=torch.float32).unsqueeze(0).unsqueeze(0)
                 next_players_input = torch.tensor(next_state["player"], dtype=torch.float32).unsqueeze(0)
                 with torch.no_grad():
-                    next_q_values = self.model(next_map_input, next_players_input)
-                    next_action = torch.argmax(next_q_values).item()
-                    target += self.gamma * next_q_values[0][next_action].item()
+                    next_q_values = self.target_model(next_map_input, next_players_input)
+                    target += self.gamma * torch.max(next_q_values).item()
             
             # Target tensor for the action taken
             targets.append((action, target))
