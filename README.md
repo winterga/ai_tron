@@ -30,7 +30,7 @@ Navigate with the arrow keys and press `[Enter]` on the highlighted option to ac
 Player vs. Player option: Player 1 uses WASD to control their bike. Player 2 uses arrow keys.
 All other active match options: Human player starts in top left and uses WASD to control their bike. Bot/AI starts in bottom right.
 
-Tournament option: The tournament will simulate games between all pairs of algorithms. The number of games it will simulate for each pairing can be changed in the Tron class by modifying `num_tourney_rounds` (line 92 in Tron.py). Currently, it is set to run for 30 games per pairing.
+Tournament option: The tournament will simulate games between all pairs of algorithms. The number of games it will simulate for each pairing can be changed in the Tron class by modifying `num_tourney_rounds` (line 93 in Tron.py). Currently, it is set to run for 30 games per pairing.
 
 # Notes on Training
 No datasets are required for training any of the models implemented in this repository. Genetic algorithm weights for the fitness function... FIXME E.S.
@@ -40,7 +40,7 @@ for 50 epochs/episodes (can be changed in the `startDeepTraining` function in `T
 The current trained model parameters for the genetic algorithm have been saved in the Tron class as `best_genome`. Optionally, clicking on the "Train AI w Genetic Algorithm" option in the main menu will train the model for 50 generations (20 games per generation) and overwrite the current best_genome with the newly trained results (parameters can be changed in the `start_training` function in `Tron.py` but may lead to inconsistent results).
 
 # Credit
-Authors: Greyson Wintergerst, Eileen Hsu, ...
+Authors: Greyson Wintergerst, Eileen Hsu, Debanjan Chakraborti, and Astha Sinha
 Last Updated: December 6th, 2024
 
 This project took inspiration from the following repository: https://github.com/nlieb/PyTron.
